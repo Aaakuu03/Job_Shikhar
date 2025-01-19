@@ -12,6 +12,10 @@ import JobSeekerLayout from "./layouts/JobSeekerLayout";
 import EmployerLayout from "./layouts/EmployerLayout";
 import EmployerRegisterForm from "./pages/user/Employer/EmployerRegisterForm";
 import JobSeekerHome from "./pages/user/JobSeeker/JobSeekeerHome";
+import AboutUs from "./pages/user/AboutUs";
+import EmailVerifyPage from "./pages/EmailVerifyPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/ForgetPasswordPage";
 
 export default function App() {
   return (
@@ -22,12 +26,20 @@ export default function App() {
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
           <Route path="/blogs" element={<Blogs />} />
+          <Route path="/about" element={<AboutUs />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/jobseeker/login" element={<JobseekerLogin />} />
           <Route
             path="/jobseeker/register"
             element={<JobseekerRegisterForm />}
           />
+          <Route path="/employer/register" element={<EmployerRegisterForm />} />
+          <Route path="/verify-email/:token" element={<EmailVerifyPage />} />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPasswordPage />}
+          />
+          <Route path="/forget" element={<ForgotPasswordPage />} />
         </Route>
         <Route path="/jobseeker" element={<JobSeekerLayout />}>
           <Route index element={<Home />} />

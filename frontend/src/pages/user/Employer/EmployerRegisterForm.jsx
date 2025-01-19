@@ -1,4 +1,86 @@
+import { useState } from "react";
+
+import toast from "react-hot-toast";
+import { NavLink } from "react-router-dom";
+
 export default function EmployerRegisterForm() {
+  const Validation = (userInput) => {
+    let errors = {};
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    const numberRegex = /^(\d{3})[-. ]?(\d{3})[-. ]?(\d{4})$/;
+
+    if (!userInput.email) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(userInput.email)) {
+      errors.email = "Email is invalid";
+    }
+
+    if (!userInput.phoneNumber) {
+      errors.phoneNumber = "Phone number is required";
+    } else if (!numberRegex.test(userInput.phoneNumber)) {
+      errors.phoneNumber = "Invalid phone number format";
+    }
+
+    if (!userInput.password) {
+      errors.password = "Password is required";
+    } else if (userInput.password.length < 6) {
+      errors.password = "Password must be more than 6 characters";
+    }
+
+    if (!userInput.name) {
+      errors.name = "First Name is required";
+    } else if (userInput.name.length < 3) {
+      errors.tName = " Name must be more than 3 characters";
+    }
+
+    return errors;
+  };
+
+  const [userInput, setUserInput] = useState({
+    email: "",
+    name: "",
+    phonrNumber: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState({});
+  const handleSignup = async (e) => {
+    e.preventDefault();
+
+    const validationErrors = Validation(userInput);
+    setErrors(validationErrors);
+
+    // If there are validation errors, do not proceed
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/users/employer/register",
+        userInput
+      );
+      console.log("Response:", response);
+      toast.success("Registration successful");
+    } catch (error) {
+      console.error("Error response:", error.response); // Log error response
+
+      if (
+        error.response &&
+        error.response.data.message === "Email is already in use."
+      ) {
+        setErrors({ email: "Email is already in use." });
+        toast.error("Email is already in use.");
+      } else if (
+        error.response &&
+        error.response.data.message === "Phone number is already in use."
+      ) {
+        setErrors({ email: "Phone number is already in use." });
+        toast.error("Phone number is already in use.");
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
+    }
+  };
   return (
     <div className=" max-w-4xl flex items-center mx-auto  py-10">
       <div className="bg-white grid md:grid-cols-3 items-center shadow-[0_2px_10px_-3px_rgba(6,81,237,0.3)] rounded-xl overflow-hidden ">
@@ -30,20 +112,19 @@ export default function EmployerRegisterForm() {
         >
           <div className="mb-6">
             <h3 className="text-gray-800 text-2xl font-bold">
-              Create your free{" "}
+              Create your{" "}
               <span className="text-customGray group-hover:text-customSil">
-                Job
+                Employer
               </span>
-              <span className="text-customSil group-hover:text-customGray">
-                Shikhar
-              </span>{" "}
               account
             </h3>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="text-gray-800 text-sm mb-2 block">Organization Name</label>
+              <label className="text-gray-800 text-sm mb-2 block">
+                Organization Name
+              </label>
               <div className="relative flex items-center">
                 <input
                   name="name"
@@ -188,12 +269,14 @@ export default function EmployerRegisterForm() {
           </div>
           <p className="text-gray-800 text-sm mt-6 text-center">
             Already have an account?{" "}
-            <a
-              href="javascript:void(0);"
-              className="text-blue-600 font-semibold hover:underline ml-1"
-            >
-              Login here
-            </a>
+            <NavLink to="/jobseeker/login">
+              <a
+                href="javascript:void(0);"
+                className="text-blue-600 font-semibold hover:underline ml-1"
+              >
+                Login here
+              </a>
+            </NavLink>
           </p>
 
           <div className="mt-10">

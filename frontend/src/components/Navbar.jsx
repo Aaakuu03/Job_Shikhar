@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
-import logo from "../assets/logo.png";
-
+import logo from "@/assets/logo.png";
 export default function Navbar() {
   return (
     <div className="navbar bg-base-100  cursor-pointer px-10 shadow-lg">
@@ -45,10 +44,12 @@ export default function Navbar() {
             </NavLink>
           </li>
           <li>
-            <a>Training</a>
+            <a>FAQs</a>
           </li>
           <li>
-            <a>About Us</a>
+            <NavLink to="/about">
+              <a>About Us</a>
+            </NavLink>
           </li>
         </ul>
       </div>
@@ -117,7 +118,9 @@ export default function Navbar() {
               <a>Login </a>
             </li>
             <li>
-              <a> Register</a>
+              <NavLink to="/employer/register">
+                <a> Register</a>
+              </NavLink>
             </li>
           </ul>
         </div>

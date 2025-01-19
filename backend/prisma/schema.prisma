@@ -15,6 +15,12 @@ model User {
   phoneNumber   String  @unique
   password String
   userType Role       @default(JOBSEEKER)
+  isVerified     Boolean  @default(false)
+  verificationToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resetPasswordToken     String?  
+  resetPasswordTokenExpiry DateTime? 
   employer Employer[]
   jobSeeker  Job_Seeker[]
 }

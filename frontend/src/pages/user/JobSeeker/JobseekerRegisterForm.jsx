@@ -6,7 +6,7 @@ import { NavLink } from "react-router-dom";
 export default function JobseekerRegisterForm() {
   const Validation = (userInput) => {
     let errors = {};
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     const numberRegex = /^(\d{3})[-. ]?(\d{3})[-. ]?(\d{4})$/;
 
     if (!userInput.email) {

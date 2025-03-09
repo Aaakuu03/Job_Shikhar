@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { FaCog, FaHome, FaUserCircle } from "react-icons/fa";
 
 export default function NavbarJob() {
   return (
@@ -55,37 +56,62 @@ export default function NavbarJob() {
         </ul>
       </div>
       <div className="navbar-end  ">
-        <div className="dropdown dropdown-bottom dropdown-end ">
+        <button className="btn btn-ghost btn-circle w-20">
+          <div className="flex flex-col items-center">
+            <div className="indicator">
+              <FaHome size={20} />
+            </div>
+            <span className="btm-nav-label mt-2">Home</span>
+          </div>
+        </button>
+
+        <NavLink to="/jobseeker/setting">
+          <button className="btn btn-ghost btn-circle w-20">
+            <div className="flex flex-col items-center">
+              <div className="indicator">
+                <FaCog size={20} />
+              </div>
+              <span className="btm-nav-label mt-2 ">Setting</span>
+            </div>
+          </button>
+        </NavLink>
+
+        <button className="btn btn-ghost btn-circle w-20">
+          <div className="flex flex-col items-center">
+            <div className="indicator">
+              <FaUserCircle size={20} />
+            </div>
+            <span className="btm-nav-label mt-2 ">My Profile</span>
+          </div>
+        </button>
+
+        <div className="  dropdown dropdown-end aria-controls">
           <div
             tabIndex={0}
             role="button"
-            className="btn m-1 text-xl font-black  text-customGray capitalize hover:uppercase"
+            className="btn btn-ghost btn-circle avatar "
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="size-6"
-            >
-              <path
-                fillRule="evenodd"
-                d="M4.5 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5h16.5a.75.75 0 0 0 0-1.5h-.75V3.75a.75.75 0 0 0 0-1.5h-15ZM9 6a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm-.75 3.75A.75.75 0 0 1 9 9h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75ZM9 12a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm3.75-5.25A.75.75 0 0 1 13.5 6H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM13.5 9a.75.75 0 0 0 0 1.5H15A.75.75 0 0 0 15 9h-1.5Zm-.75 3.75a.75.75 0 0 1 .75-.75H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM9 19.5v-2.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 9 19.5Z"
-                clipRule="evenodd"
+            <div className="w-10 rounded-full">
+              <img
+                alt="Tailwind CSS Navbar component"
+                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
               />
-            </svg>
-            Employer
+            </div>
           </div>
           <ul
             tabIndex={0}
-            className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow font-semibold"
+            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a>Login </a>
+              <NavLink to="/jobseeker/update">
+                <a className="justify-between">Edit Profile</a>
+              </NavLink>
             </li>
             <li>
-              <NavLink to="/employer/register">
-                <a> Register</a>
-              </NavLink>
+              <a>Settings</a>
+            </li>
+            <li>
+              <a>Logout</a>
             </li>
           </ul>
         </div>

@@ -1,7 +1,11 @@
+import JobStats from "../../../components/Jobseeker/JobStats";
+import JobTab from "../../../components/Jobseeker/JobTab";
+
 export default function JobSeekerHome() {
   return (
     <>
-      <h1>This is a Dashboard</h1>
+      <JobStats />
+      <JobTab />
     </>
   );
 }

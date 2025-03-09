@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 dotenv.config();
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
 console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+const secret = process.env.SECRET_KEY || "fallback_secret";
 
 // Setup Nodemailer
 const transporter = nodemailer.createTransport({
@@ -71,23 +72,32 @@ const jobSeekerRegister = async (req, res) => {
       text: `Click on this link to verify your email: ${verificationLink}`,
     });
 
-    // Create JWT token (use environment variable for secret)
-    const token = jwt.sign({ user }, "casdkjfqheiru23", { expiresIn: "1h" });
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user.id, userType: user.userType },
+      process.env.JWT_SECRET || "default_secret",
+      { expiresIn: "1h" }
+    );
 
-    // Send response with token and user info
     return res
-      .status(200)
+      .status(201)
       .cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV == "production", // Set secure cookie in production
+        secure: process.env.NODE_ENV === "production",
       })
       .json({
-        message: "Registration successful! Check your email for verification",
-        user,
+        message: "Registration successful! Check your email for verification.",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+        },
+        token,
       });
   } catch (error) {
     console.error("Error during registration:", error);
-    res
+    return res
       .status(500)
       .json({ message: "Error registering user", error: error.message });
   }
@@ -99,44 +109,34 @@ const verifyEmail = async (req, res) => {
 
   console.log("Received token:", token); // Log the received token for debugging
   try {
-    // Check if the user exists and matches conditions
+    // Find the user by verificationToken
     const matchingUser = await prisma.user.findFirst({
       where: {
-        verificationToken: null,
-        isVerified: true,
+        verificationToken: token, // Look for the user with the given token
+        isVerified: false, // Ensure they are not already verified
       },
     });
 
-    if (matchingUser) {
-      console.log("No matching user found or user already verified.");
-      res.status(400).json({ message: "user already verified." });
-      return;
+    if (!matchingUser) {
+      console.log("No matching user found.");
+      return res.status(400).json({ message: "Invalid or expired token." });
     }
 
     console.log("Matching user found:", matchingUser);
 
-    // Look for the user by verificationToken and update if found
-    const user = await prisma.user.updateMany({
-      where: {
-        verificationToken: token, // Find the user by the token
-        isVerified: false, // Make sure the user has not already been verified
-      },
-      data: {
-        isVerified: true, // Set the user as verified
-        verificationToken: null, // Remove the verification token after success
-      },
+    // Update user as verified
+    const user = await prisma.user.update({
+      where: { id: matchingUser.id },
+      data: { isVerified: true, verificationToken: null },
     });
 
-    if (user.count > 0) {
-      console.log("User verified successfully.");
-      res.status(200).json({ message: "Email verified successfully!" });
-    } else {
-      console.log("No matching token or already verified.");
-      res.status(400).json({ message: "Invalid or expired token." });
-    }
+    console.log("User verified successfully:", user);
+    res.status(200).json({ message: "Email verified successfully!" });
   } catch (error) {
     console.error("Error during verification:", error);
-    res.status(500).json({ message: "Verification failed." });
+    res
+      .status(500)
+      .json({ message: "Verification failed. Please try again later." });
   }
 };
 
@@ -238,94 +238,92 @@ const resetPassword = async (req, res) => {
   }
 };
 
-//Jobseeker Login
-const jobSeekerLogin = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Please fill all fields." });
-  }
-
+const userLogin = async (req, res) => {
   try {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+    const { email, password } = req.body;
 
-    if (!user || user.userType !== "JOBSEEKER") {
-      return res.status(400).json({ message: "User not found" });
-    }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please fill all fields." });
     }
 
-    const token = jwt.sign({ user }, "casdkjfqheiru23", { expiresIn: "1h" });
-
-    return res
-      .status(200)
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV == "production",
-      })
-      .json({ message: "User logged in successfully", user, token });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "User not found", error: error.message });
-  }
-};
-
-//Staff Login
-const employerLogin = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Please fill all fields" });
-  }
-
-  try {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // Find user with role check
     const user = await prisma.user.findUnique({
-      where: {
-        email,
-        userType: "EMPLOYER",
-      },
+      where: { email },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Employer not found" });
+      return res.status(400).json({ message: "User not found." });
     }
 
+    // Validate password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    const token = jwt.sign({ user }, "casdkjfqheiru23", { expiresIn: "1h" });
+    const token = jwt.sign(
+      { userId: user.id, userType: user.userType },
+      secret,
+      {
+        expiresIn: "6h",
+      }
+    );
 
-    return res
-      .status(200)
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV == "production",
-      })
-      .json({ message: "Staff logged in successfully", user, token });
+    // Store the token in the database (optional)
+    await prisma.token.create({
+      data: {
+        token: token,
+        userId: user.id,
+      },
+    });
+
+    // Determine redirect URL
+    let redirectUrl;
+    if (!user.isFormFilled) {
+      redirectUrl =
+        user.userType === "JOBSEEKER"
+          ? "/jobseeker/fill-form"
+          : "/employer/fill-form";
+    } else if (user.userType === "JOBSEEKER") {
+      redirectUrl = "/jobseeker/dashboard";
+    } else if (user.userType === "EMPLOYER") {
+      redirectUrl = "/employer/dashboard";
+    } else {
+      return res.status(400).json({ message: "Invalid user type." });
+    }
+    // Set cookie & send response
+
+    res.cookie("jwt", token, {
+      httpOnly: true, // Secures cookie against XSS
+      secure: process.env.NODE_ENV === "production", // HTTPS in production
+      sameSite: "Strict", // CSRF protection
+      maxAge: 6 * 60 * 60 * 1000, // 6 hours
+    });
+    console.log("Generated JWT:", token);
+    return res.status(200).json({
+      message: "User logged in successfully.",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+      },
+      redirectUrl,
+      token,
+    });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Staff not found", error: error.message });
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      message: "An error occurred during login.",
+      error: error.message,
+    });
   }
 };
 
 //Employer Register
 const employerRegister = async (req, res) => {
-  const { name, email, phone, password } = req.body;
-  if (!name || !password || !phone || !email) {
+  const { name, email, phoneNumber, password } = req.body;
+  if (!name || !password || !phoneNumber || !email) {
     return res.status(400).json({ message: "Please fill all fields." });
   }
   try {
@@ -339,11 +337,11 @@ const employerRegister = async (req, res) => {
     }
 
     // Check if the phone number already exists
-    existingUser = await prisma.user.findUnique({
-      where: { phoneNumber: phone },
+    let existingPhoneUser = await prisma.user.findUnique({
+      where: { phoneNumber },
     });
 
-    if (existingUser) {
+    if (existingPhoneUser) {
       return res
         .status(400)
         .json({ message: "Phone number is already in use." });
@@ -351,28 +349,48 @@ const employerRegister = async (req, res) => {
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const verificationToken = uuidv4();
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        phoneNumber: phone,
+        phoneNumber,
         password: hashedPassword,
+        verificationToken,
         userType: "EMPLOYER",
       },
     });
-    if (!user) {
-      return res.status(400).json({ message: "Employer not created." });
-    }
+
+    // Prepare verification email
+    const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      text: `Click on this link to verify your email: ${verificationLink}`,
+    });
+
+    // Create JWT token (use environment variable for secret)
+    const token = jwt.sign({ user }, "casdkjfqheiru23", { expiresIn: "1h" });
+
+    // Send response with token and user info
     return res
-      .status(201)
-      .json({ message: "Employer account created successfully", user });
+      .status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV == "production", // Set secure cookie in production
+      })
+      .json({
+        message: "Registration successful! Check your email for verification",
+        user,
+      });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Employer account not created", error: error.message });
+    console.error("Error during registration:", error);
+    res
+      .status(500)
+      .json({ message: "Error registering user", error: error.message });
   }
 };
-
 //Admin Login
 const adminLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -442,9 +460,8 @@ const adminRegister = async (req, res) => {
 };
 
 export {
-  jobSeekerLogin,
+  userLogin,
   jobSeekerRegister,
-  employerLogin,
   employerRegister,
   verifyEmail,
   sendResetPasswordEmail,

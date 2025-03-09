@@ -12,7 +12,7 @@ export default function EmailVerifyPage() {
     const verifyEmail = async () => {
       try {
         // Send GET request to the backend with the token
-        const response = await axios.get(
+        const response = await axios.put(
           `http://localhost:5000/api/users/verify-email/${token}`
         );
         console.log("Token being sent:", token);
@@ -21,22 +21,13 @@ export default function EmailVerifyPage() {
           setVerificationStatus("Your email has been verified successfully!");
           setTimeout(() => {
             navigate("/jobseeker/login"); // Redirect to login page after successful verification
-          }, 2000); // Delay before redirecting
+          }, 3000); // Delay before redirecting
         }
       } catch (error) {
-        // Handle different error cases
-        if (error.response) {
-          const message = error.response.data.message;
-          if (message === "user already verified.") {
-            setVerificationStatus("User already verified.");
-          } else if (message === "Invalid or expired token.") {
-            setVerificationStatus("Invalid or expired token.");
-          } else {
-            setVerificationStatus("An unexpected error occurred.");
-          }
-        } else {
-          setVerificationStatus("Unable to connect to the server.");
-        }
+        // Handle errors
+        const message =
+          error.response?.data?.message || "Unable to connect to the server.";
+        setVerificationStatus(message);
       }
     };
 
@@ -45,13 +36,13 @@ export default function EmailVerifyPage() {
   }, [token, navigate]); // Runs whenever the token or navigate changes
 
   return (
-    <div>
-      <h2>Email Verification</h2>
-      {verificationStatus ? (
-        <p>{verificationStatus}</p>
-      ) : (
-        <p>Verifying your email...</p>
-      )}
+    <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="bg-white p-6 rounded shadow-md">
+        <h2 className="text-lg font-bold text-center">Email Verification</h2>
+        <p className="text-gray-700 mt-4 text-center">
+          {verificationStatus || "Verifying your email... Please wait."}
+        </p>
+      </div>
     </div>
   );
 }

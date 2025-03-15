@@ -152,7 +152,7 @@ export default function EmployerRegisterForm() {
 
             <div>
               <label className="text-gray-800 text-sm mb-2 block">
-                Email Id
+                Organization Email
               </label>
               <div className="relative flex items-center">
                 <input
@@ -175,7 +175,7 @@ export default function EmployerRegisterForm() {
 
             <div>
               <label className="text-gray-800 text-sm mb-2 block">
-                Phone Number
+                Organization Phone Number
               </label>
               <div className="relative flex items-center">
                 <input

@@ -39,6 +39,7 @@ import TrainingList from "./components/Jobseeker/Training/TrainingList";
 import AddTraining from "./components/Jobseeker/Training/AddTraining";
 import AddWorkExperience from "./components/Jobseeker/WorkExperience/AddWorkExperience";
 import WorkExperienceList from "./components/Jobseeker/WorkExperience/WorkExperienceList";
+import EmpProfile from "./components/Employer/EmpProfile";
 
 export default function App() {
   return (
@@ -91,6 +92,7 @@ export default function App() {
         <Route path="/employer" element={<EmployerLayout />}>
           <Route index element={<Home />} />
           <Route path="/employer/dashboard" element={<EmployerHome />} />
+          <Route path="/employer/fill-form" element={<EmpProfile />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />

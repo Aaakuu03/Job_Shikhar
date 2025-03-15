@@ -61,8 +61,8 @@ model Education {
   courseProgram String?
   board         String
   college       String?
-  startDate     DateTime
-  endDate       DateTime? // Optional field
+  startDate     Int
+  endDate       Int? // Optional field
   currentlyStudying Boolean @default(false) // To track if the user is currently studying
   jobSeeker     JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
 }
@@ -74,7 +74,7 @@ model Training {
   trainingName  String
   institute     String
   duration      Int
-  date          DateTime
+  year          Int
   jobSeeker     JobSeeker  @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
 }
 
@@ -83,8 +83,9 @@ model WorkExperience {
   jobSeekerId   String
   companyName   String
   position      String
-  startDate     DateTime
-  endDate       DateTime?
+  startDate     Int
+  endDate       Int
+  jobLocation   String
   description   String?
   jobSeeker     JobSeeker  @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
 }
@@ -93,13 +94,16 @@ model WorkExperience {
 
 model Employer {
   id             String  @id @default(cuid()) // Changed to CUID
-  name           String
   user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String  @unique
-  address        String?
-  industry       String?
-  aboutCompany   String?
-  contactDetails String?
+  industryType  String
+  address       String
+  companySize   String
+  contactName   String
+  phone         String
+  aboutCompany  String? // Optional field
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   job            Job[]
 }
 

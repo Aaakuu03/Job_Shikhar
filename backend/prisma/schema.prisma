@@ -61,8 +61,8 @@ model Education {
   courseProgram String?
   board         String
   college       String?
-  startDate     Int
-  endDate       Int? // Optional field
+  startDate       Int      // Store as an integer (year)
+  endDate         Int?     // Store as an integer (year, nullable)
   currentlyStudying Boolean @default(false) // To track if the user is currently studying
   jobSeeker     JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
 }
@@ -83,9 +83,9 @@ model WorkExperience {
   jobSeekerId   String
   companyName   String
   position      String
+  jobLocation   String
   startDate     Int
   endDate       Int
-  jobLocation   String
   description   String?
   jobSeeker     JobSeeker  @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
 }
@@ -101,7 +101,7 @@ model Employer {
   companySize   String
   contactName   String
   phone         String
-  aboutCompany  String? // Optional field
+  aboutCompany  String 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   job            Job[]

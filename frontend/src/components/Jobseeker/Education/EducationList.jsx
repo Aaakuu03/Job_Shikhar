@@ -1,7 +1,56 @@
 import { NavLink } from "react-router-dom";
 import ProfileSide from "../../../components/Jobseeker/ProfileSide";
+import axios from "axios";
+import { useState, useEffect } from "react";
+import { FiEdit, FiTrash } from "react-icons/fi"; // import edit and trash icons
 
 export default function EducationList() {
+  const [educationList, setEducationList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch the education data
+  useEffect(() => {
+    const fetchEducation = async () => {
+      try {
+        const response = await axios.get("/api/education/", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setEducationList(response.data.education);
+      } catch (error) {
+        console.error(
+          "Error fetching education records:",
+          error.response?.data || error.message
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEducation();
+  }, []);
+
+  // Handle delete functionality
+  const handleDelete = async (id) => {
+    try {
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this education record?"
+      );
+      if (confirmDelete) {
+        await axios.delete(`/api/education/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        // Refresh the education list after deletion
+        setEducationList(
+          educationList.filter((education) => education.id !== id)
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting education record:", error);
+    }
+  };
+
+  if (loading) return <p>Loading education records...</p>;
+
   return (
     <div className="m-10">
       <div className="p-4 border border-[#B3B3B3] bg-[#F0EFEF] mb-1">
@@ -14,47 +63,71 @@ export default function EducationList() {
         <div className="flex-1 border-b border-[#B3B3B3] bg-[#F2F0EF]">
           <div className="relative border-b border-[#B3B3B3]  p-4 font-bold">
             Education Information
-            <NavLink to="/jobseeker/education/edit">
-              <button
-                type="button"
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 py-3 px-4  mr-2 text-sm tracking-wider font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
-              >
-                Edit
-              </button>
-            </NavLink>
           </div>
           <section className=" p-1 bg-[#F2F0EF] ">
             <div class="space-y-6 p-4  mx-auto font-[sans-serif]">
-              <div class="flex items-center border-t-2 border-b-2 focus:border-[#333]  p-1">
-                <label class="text-gray-400 w-36 text-sm">Degree</label>
-                <label className="px-2 py-2   text-sm bg-white">
-                  Aakriti Nepali
-                </label>
-              </div>
-
-              <div class="flex items-center border-t-2 border-b-2 focus:border-[#333] p-1">
-                <label class="text-gray-400 w-36 text-sm ">Course</label>
-                <label className="px-2 py-2  text-sm bg-white">
-                  naakrit03@gamil.com
-                </label>
-              </div>
-
-              <div class="flex items-center border-t-2 border-b-2 focus:border-[#333] p-1">
-                <label class="text-gray-400 w-36 text-sm">
-                  University/Board
-                </label>
-                <label className="px-2 py-2 text-sm bg-white">9807716016</label>
-              </div>
-
-              <div class="flex items-center border-t-2 border-b-2 focus:border-[#333] p-1">
-                <label class="text-gray-400 w-36 text-sm">College/School</label>
-                <label className="px-2 py-2   text-sm bg-white">
-                  Bagar, Pokhara
-                </label>
-              </div>
-              <div class="flex items-center border-t-2 border-b-2 focus:border-[#333] p-1">
-                <label class="text-gray-400 w-36 text-sm">Date</label>
-                <label className="px-2 py-2   text-sm bg-white">Female</label>
+              <h2 className="text-xl font-bold mb-4">Education Records</h2>
+              {educationList.length === 0 ? (
+                <div>
+                  <p>No education records found. Here Add Education</p>
+                </div>
+              ) : (
+                <ul>
+                  {educationList.map((education) => (
+                    <li
+                      key={education.id}
+                      className="relative p-4 border border-gray-300 rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      {/* Edit Icon */}
+                      <NavLink to={`/jobseeker/education/edit/${education.id}`}>
+                        <button
+                          className="absolute top-3 right-12 text-blue-500 hover:text-blue-700"
+                          aria-label="Edit Training"
+                        >
+                          <FiEdit size={20} />
+                        </button>
+                      </NavLink>
+                      {/* Delete Icon */}
+                      <button
+                        onClick={() => handleDelete(education.id)}
+                        className="absolute top-3 right-3 text-red-500 hover:text-red-700"
+                        aria-label="Delete Training"
+                      >
+                        <FiTrash size={20} />
+                      </button>
+                      {/* Education Details */}
+                      <li className="mb-4">
+                        <strong className="text-lg font-semibold text-gray-800">
+                          {education.degree}
+                        </strong>{" "}
+                        -
+                        <span className="text-gray-700">
+                          {education.courseProgram}
+                        </span>
+                        <p className="text-gray-600 mt-1">
+                          {education.board}, {education.college}
+                        </p>
+                        <span className="text-sm text-gray-500">
+                          ( {education.startDate} -{" "}
+                          {education.currentlyStudying
+                            ? "Currently Studying"
+                            : education.endDate}{" "}
+                          )
+                        </span>
+                      </li>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="border-t mt-8 pt-6 flex justify-center">
+                <NavLink to="/jobseeker/education/add">
+                  <button
+                    type="button"
+                    className="py-3 px-6 text-sm font-semibold border-2 border-gray-800 rounded-md text-white bg-gray-800 hover:bg-white hover:text-gray-800 transition-colors"
+                  >
+                    Add Training
+                  </button>
+                </NavLink>
               </div>
             </div>
           </section>

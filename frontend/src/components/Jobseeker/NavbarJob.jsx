@@ -14,7 +14,7 @@ export default function NavbarJob() {
           "
           />
           <div className="text-3xl font-bold  group">
-            <NavLink to="/">
+            <NavLink to="/jobseeker/dashboard">
               <span className="text-customGray group-hover:text-customSil">
                 Job
               </span>
@@ -41,15 +41,17 @@ export default function NavbarJob() {
             </details>
           </li>
           <li>
-            <NavLink to="/blogs">
+            <NavLink to="/jobseeker/blogs">
               <a>Blogs</a>
             </NavLink>
           </li>
           <li>
-            <a>FAQs</a>
+            <NavLink to="/jobseeker/faqs">
+              <a>FAQss</a>
+            </NavLink>
           </li>
           <li>
-            <NavLink to="/about">
+            <NavLink to="/jobseeker/about">
               <a>About Us</a>
             </NavLink>
           </li>
@@ -76,14 +78,16 @@ export default function NavbarJob() {
           </button>
         </NavLink>
 
-        <button className="btn btn-ghost btn-circle w-20">
-          <div className="flex flex-col items-center">
-            <div className="indicator">
-              <FaUserCircle size={20} />
+        <NavLink to="/jobseeker/profile">
+          <button className="btn btn-ghost btn-circle w-20">
+            <div className="flex flex-col items-center">
+              <div className="indicator">
+                <FaUserCircle size={20} />
+              </div>
+              <span className="btm-nav-label mt-2 ">My Profile</span>
             </div>
-            <span className="btm-nav-label mt-2 ">My Profile</span>
-          </div>
-        </button>
+          </button>
+        </NavLink>
 
         <div className="  dropdown dropdown-end aria-controls">
           <div

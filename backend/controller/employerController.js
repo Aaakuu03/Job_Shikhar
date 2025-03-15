@@ -23,8 +23,80 @@ const getEmployerProfile = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-// Update Job Seeker Profile
-const updateJobSeekerProfile = async (req, res) => {
+
+// controllers/jobSeekerController.js
+const createEmployerProfile = async (req, res) => {
+  try {
+    const {
+      industryType,
+      address,
+      companySize,
+      contactName,
+      phone,
+      aboutCompany,
+    } = req.body;
+
+    // Ensure required fields are provided (if applicable)
+    if (!req.userId) {
+      return res.status(400).json({ error: "User ID is missing from token." });
+    }
+
+    // Ensure the user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Check if the JobSeeker profile already exists
+    const existingProfile = await prisma.employer.findUnique({
+      where: { userId: req.userId },
+    });
+
+    if (existingProfile) {
+      return res
+        .status(400)
+        .json({ error: "Employer profile already exists." });
+    }
+
+    // Create the JobSeeker profile
+    const newProfile = await prisma.employer.create({
+      data: {
+        userId: req.userId,
+        industryType: industryType,
+        address: address,
+        companySize: companySize,
+        contactName: contactName,
+        phone: phone,
+        aboutCompany: aboutCompany,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // Update `isFormFilled` to true after successful profile creation
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { isFormFilled: true },
+    });
+
+    res.status(201).json({
+      message: "Employer profile created successfully.",
+      profile: newProfile,
+    });
+  } catch (error) {
+    console.error("Error creating employer profile:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      details: error.message,
+    });
+  }
+};
+
+const updateEmployerProfile = async (req, res) => {
   try {
     const {
       dob,
@@ -88,73 +160,6 @@ const updateJobSeekerProfile = async (req, res) => {
     res.status(500).json({
       message: "Error updating job seeker profile",
       error: error.message,
-    });
-  }
-};
-
-const createEmployerProfile = async (req, res) => {
-  try {
-    const {
-      industryType,
-      address,
-      companySize,
-      contactName,
-      phone,
-      aboutCompany,
-    } = req.body;
-
-    // Ensure user ID exists in token
-    if (!req.userId) {
-      return res.status(400).json({ error: "User ID is missing from token." });
-    }
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.userId },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Check if the Employer profile already exists
-    const existingProfile = await prisma.employer.findUnique({
-      where: { id: req.userId },
-    });
-
-    if (existingProfile) {
-      return res
-        .status(400)
-        .json({ error: "Employer profile already exists." });
-    }
-
-    // Create new employer profile
-    const newProfile = await prisma.employer.create({
-      data: {
-        industryType,
-        address,
-        companySize,
-        contactName,
-        phone,
-        aboutCompany,
-      },
-    });
-
-    // Update user's profile completion status
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { isFormFilled: true },
-    });
-
-    res.status(201).json({
-      message: "Employer profile created successfully.",
-      profile: newProfile,
-    });
-  } catch (error) {
-    console.error("Error creating employer profile:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      details: error.message,
     });
   }
 };

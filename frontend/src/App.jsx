@@ -111,6 +111,7 @@ export default function App() {
         <Route path="/employer" element={<EmployerLayout />}>
           <Route index element={<Home />} />
           <Route path="/employer/dashboard" element={<EmployerHome />} />
+          <Route path="/employer/form" element={<EmpProfile />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />

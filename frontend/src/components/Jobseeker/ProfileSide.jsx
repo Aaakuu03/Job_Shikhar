@@ -44,7 +44,7 @@ export default function ProfileSide() {
             </NavLink>
           </li>
           <li className="border-b border-[#B3B3B3] ">
-            <NavLink to="/jobseeker/work/info">
+            <NavLink to="/jobseeker/workexperience/info">
               <a
                 href="javascript:void(0)"
                 className="text-sm flex items-center font-extrabold hover:text-[#BAA898]  hover:border-r-[5px] border-[#BAA898] bg-[#F2F0EF] px-8 py-4 transition-all"

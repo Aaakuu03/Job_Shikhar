@@ -34,11 +34,14 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Register from "./components/register";
 import PreferredJob from "./components/Jobseeker/PreferredJob";
 import EducationList from "./components/Jobseeker/Education/EducationList";
-import AddEducation from "./components/Jobseeker/Education/AddEducation";
+
 import TrainingList from "./components/Jobseeker/Training/TrainingList";
-import AddTraining from "./components/Jobseeker/Training/AddTraining";
-import AddWorkExperience from "./components/Jobseeker/WorkExperience/AddWorkExperience";
+
 import WorkExperienceList from "./components/Jobseeker/WorkExperience/WorkExperienceList";
+import AddEducation from "./pages/user/JobSeeker/AddEducation";
+import AddTraining from "./pages/user/JobSeeker/AddTraining";
+import EmpProfile from "./components/Employer/EmpProfile";
+import AddWorkExperience from "./pages/user/JobSeeker/AddWorkExperience";
 
 export default function App() {
   return (
@@ -69,28 +72,46 @@ export default function App() {
         </Route>
 
         <Route path="/jobseeker" element={<JobSeekerLayout />}>
-          <Route index element={<Home />} />
           <Route path="/jobseeker/dashboard" element={<JobSeekerHome />} />
+          <Route path="/jobseeker/blogs" element={<Blogs />} />
+          <Route path="/jobseeker/faqs" element={<Faq />} />
+          <Route path="/jobseeker/about" element={<AboutUs />} />
           <Route path="/jobseeker/fill-form" element={<PreferredJob />} />
           <Route path="/jobseeker/setting" element={<JobSetting />} />
           <Route path="/jobseeker/profile" element={<Profile />} />
-          <Route path="/jobseeker/edit" element={<EditProfile />} />
+          <Route path="/jobseeker/edit/:id" element={<EditProfile />} />
           <Route path="/jobseeker/info" element={<BasicInformationForm />} />
           <Route path="/jobseeker/update" element={<UpdateProfile />} />
-          <Route path="/jobseeker/education/edit" element={<EditEducation />} />
+          <Route
+            path="/jobseeker/education/edit/:id"
+            element={<EditEducation />}
+          />
           <Route path="/jobseeker/education/add" element={<AddEducation />} />
 
           <Route path="/jobseeker/education/info" element={<EducationList />} />
           <Route path="/jobseeker/training/add" element={<AddTraining />} />
-          <Route path="/jobseeker/training/edit" element={<EditTraining />} />
+          <Route
+            path="/jobseeker/training/edit/:id"
+            element={<EditTraining />}
+          />
           <Route path="/jobseeker/training/info" element={<TrainingList />} />
-          <Route path="/jobseeker/work/add" element={<AddWorkExperience />} />
-          <Route path="/jobseeker/work/edit" element={<EditWork />} />
-          <Route path="/jobseeker/work/info" element={<WorkExperienceList />} />
+          <Route
+            path="/jobseeker/workexperience/add"
+            element={<AddWorkExperience />}
+          />
+          <Route
+            path="/jobseeker/workexperience/info"
+            element={<WorkExperienceList />}
+          />
+          <Route
+            path="/jobseeker/workexperience/edit/:id"
+            element={<EditWork />}
+          />
         </Route>
         <Route path="/employer" element={<EmployerLayout />}>
           <Route index element={<Home />} />
           <Route path="/employer/dashboard" element={<EmployerHome />} />
+          <Route path="/employer/form" element={<EmpProfile />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />

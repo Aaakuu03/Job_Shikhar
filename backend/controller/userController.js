@@ -307,6 +307,7 @@ const userLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         userType: user.userType,
+        jobSeekerId: user.jobSeeker?.id || null, // Include jobSeekerId if available
       },
       redirectUrl,
       token,

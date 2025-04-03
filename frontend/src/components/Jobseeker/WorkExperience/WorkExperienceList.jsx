@@ -14,7 +14,7 @@ export default function WorkExperienceList() {
     const fetchWorkexperience = async () => {
       try {
         const response = await axios.get("/api/workexperience/", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         setWorkexperienceList(response.data.workExperience);
       } catch (error) {
@@ -38,7 +38,7 @@ export default function WorkExperienceList() {
       );
       if (confirmDelete) {
         await axios.delete(`/api/workexperience/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         // Refresh the workExperience list after deletion
         setWorkexperienceList(

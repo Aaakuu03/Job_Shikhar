@@ -14,7 +14,7 @@ export default function TrainingList() {
     const fetchTraining = async () => {
       try {
         const response = await axios.get("/api/training/", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         setTrainingList(response.data.training);
       } catch (error) {
@@ -38,7 +38,7 @@ export default function TrainingList() {
       );
       if (confirmDelete) {
         await axios.delete(`/api/training/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         // Refresh the training list after deletion
         setTrainingList(trainingList.filter((training) => training.id !== id));

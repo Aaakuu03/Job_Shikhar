@@ -426,6 +426,84 @@ const getJobSeekerDetails = async (req, res) => {
   }
 };
 
+const getNotification = async (req, res) => {
+  try {
+    const userId = req.userId; // Extract authenticated user ID
+
+    // Verify if the user exists and is a JOBSEEKER
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { userType: true },
+    });
+
+    if (!user || user.userType !== "JOBSEEKER") {
+      return res
+        .status(403)
+        .json({ error: "Access denied. Not a job seeker." });
+    }
+
+    // Find the corresponding job seeker ID using the userId
+    const jobSeeker = await prisma.jobSeeker.findUnique({
+      where: { userId },
+      select: { id: true }, // Fetch only the job seeker ID
+    });
+
+    if (!jobSeeker) {
+      return res.status(404).json({ error: "Job seeker profile not found." });
+    }
+
+    // Fetch notifications for the job seeker
+    const notifications = await prisma.notification.findMany({
+      where: { jobSeekerId: jobSeeker.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(notifications);
+  } catch (error) {
+    console.error("🔥 Error fetching notifications:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+const searchJobs = async (req, res) => {
+  console.log("✅ Route Hit!"); // Confirm route is being called
+
+  try {
+    const { keyword } = req.query;
+    console.log("🔍 Received Keyword:", keyword); // Log received keyword
+
+    if (!keyword) {
+      console.log("🛑 No keyword provided!");
+      return res.status(400).json({ message: "Keyword is required" });
+    }
+
+    console.log("🔍 Searching for jobs with keyword:", keyword);
+
+    const jobs = await prisma.job.findMany({
+      where: {
+        OR: [
+          { title: { contains: keyword } },
+          { description: { contains: keyword } },
+          { requirement: { contains: keyword } },
+          { salary: { contains: keyword } },
+        ],
+      },
+    });
+
+    console.log("📝 Query Result:", jobs);
+
+    if (jobs.length === 0) {
+      console.log("🚨 No jobs found for keyword:", keyword);
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.status(200).json(jobs);
+  } catch (error) {
+    console.error("❌ Error in searchJobs:", error);
+    res.status(500).json({ message: "Error searching jobs" });
+  }
+};
+
 export {
   getJobSeekerProfile,
   updateJobSeekerProfile,
@@ -435,4 +513,6 @@ export {
   getAllPreferredJobs,
   getBasicInformationById,
   getJobSeekerDetails,
+  getNotification,
+  searchJobs,
 };

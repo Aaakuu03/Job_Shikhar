@@ -31,7 +31,7 @@ export default function WorkExperienceForm() {
     e.preventDefault();
     try {
       const response = await axios.post("/api/workexperience/add", formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true, // ✅ Ensures cookies are sent
       });
       toast.success("Work experience added successfully!");
       navigate("/jobseeker/workexperience/info");

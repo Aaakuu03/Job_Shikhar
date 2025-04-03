@@ -5,17 +5,31 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-
+// import Cookies from "js-cookie"; // Import js-cookie to handle cookies easily
 export default function EmpProfile() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    industryType,
+    industryType: "",
     address: "",
     companySize: "",
     contactName: "",
     phone: "",
     aboutCompany: "",
   });
+
+  // Define the Industry Types enum (this should match your Prisma enum)
+  const industryTypes = [
+    "IT_SOFTWARE",
+    "FINANCE_BANKING",
+    "HEALTHCARE",
+    "EDUCATION",
+    "MANUFACTURING",
+    "RETAIL_ECOMMERCE",
+    "HOSPITALITY_TOURISM",
+    "FOOD_BEVERAGE",
+    "CONSTRUCTION_ENGINEERING",
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -28,18 +42,19 @@ export default function EmpProfile() {
       const response = await axios.post(
         "http://localhost:3000/api/employers/profile/create",
         formData,
-        { withCredentials: true }
+        {
+          withCredentials: true, // ✅ Ensures cookies are sent
+        }
       );
 
       // ✅ Check if the request was successful
       if (response.status === 201) {
         toast.success("Profile submitted successfully!");
 
-        // ✅ Update user data in localStorage (isFormFilled: true)
-        const user = JSON.parse(localStorage.getItem("user"));
-        user.isFormFilled = true;
-        localStorage.setItem("user", JSON.stringify(user));
-
+        // // ✅ Update user data in localStorage (isFormFilled: true)
+        // const storedUser = Cookies.get("user"); // Get user data as a string
+        // storedUser.isFormFilled = true;
+        // storedUser ? JSON.parse(storedUser).id : null; // Parse JSON if it exists
         // ✅ Redirect to dashboard
         navigate("/employer/dashboard");
       } else {
@@ -78,14 +93,12 @@ export default function EmpProfile() {
               required
               className="block w-full h-11 pr-5 pl-12 py-2.5 text-base font-normal shadow-xs text-gray-900 bg-transparent border border-gray-300 rounded-full placeholder-gray-400 focus:outline-none"
             >
-              <option value="" disabled selected>
-                Select Industry Type
-              </option>
-              <option value="Tech">Tech</option>
-              <option value="Finance">Finance</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Education">Education</option>
-              <option value="Retail">Retail</option>
+              <option value="">Select Industry</option>
+              {industryTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type.replace(/_/g, " ").toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
         </div>

@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         customGray: "#2B2B2B",
-        customSil: "#B3B3B3", // Add your custom color here
+        customSil: "#B3B3B3", 
       },
     },
   },

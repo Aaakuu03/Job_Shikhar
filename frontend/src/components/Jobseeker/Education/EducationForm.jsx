@@ -33,7 +33,7 @@ export default function EducationForm() {
     e.preventDefault();
     try {
       const response = await axios.post("/api/education/add", formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true, // ✅ Ensures cookies are sent
       });
       toast.success("Education added successfully!");
       navigate("/jobseeker/education/info");

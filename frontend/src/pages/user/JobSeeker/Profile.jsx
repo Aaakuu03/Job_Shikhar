@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
+import Cookies from "js-cookie"; // Import js-cookie to handle cookies easily
+
 import { getJobSeekerProfileDetails } from "../../../service/jobSeekerService";
 import {
   FaBrain,
@@ -23,8 +25,12 @@ export default function Profile() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const id = userId || storedUser?.id;
+        const storedUser = Cookies.get("user"); // Get user data as a string
+        const storedUserId = storedUser ? JSON.parse(storedUser).id : null; // Parse JSON if it exists
+
+        console.log("Stored User ID from Cookie:", storedUserId);
+
+        const id = userId || storedUserId; // Use the stored user ID if route param is missing
 
         if (!id) {
           setError("User ID not found. Please log in.");
@@ -109,9 +115,11 @@ export default function Profile() {
             <p>DOB: {new Date(dob).toLocaleDateString()}</p>
             <p>Gender: {gender}</p>
           </div>
-          <button className="mt-6 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700">
-            <FaEdit /> Edit Profile
-          </button>
+          <NavLink to="/jobseeker/basic-details">
+            <button className="mt-6 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700">
+              <FaEdit /> Edit Profile
+            </button>
+          </NavLink>
         </div>
       </header>
 

@@ -42,7 +42,7 @@ export default function TrainingForm() {
     };
     try {
       const response = await axios.post("/api/training/add", dataToSend, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true, // ✅ Ensures cookies are sent
       });
       toast.success("Training details added successfully!");
       navigate("/jobseeker/training/info");

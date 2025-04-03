@@ -283,7 +283,7 @@ const userLogin = async (req, res) => {
       redirectUrl =
         user.userType === "JOBSEEKER"
           ? "/jobseeker/fill-form"
-          : "/employer/fill-form";
+          : "/employer/form";
     } else if (user.userType === "JOBSEEKER") {
       redirectUrl = "/jobseeker/dashboard";
     } else if (user.userType === "EMPLOYER") {

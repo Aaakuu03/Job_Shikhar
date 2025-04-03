@@ -1,149 +1,153 @@
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { getJobSeekerInfo } from "../../service/jobSeekerService";
+import Cookies from "js-cookie"; // Import js-cookie to handle cookies easily
 export default function BasicInformationForm() {
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const storedUser = JSON.parse(Cookies.get("user"));
 
   const [formData, setFormData] = useState({
-    position: "",
-    companyName: "",
-    jobLocation: "",
-    startDate: "",
-    endDate: "",
-    description: "",
+    name: "",
+    phoneNumber: "",
+    address: "",
+    dob: "",
+    gender: "",
   });
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchWorkExperienceData = async () => {
+    if (!storedUser?.id) {
+      toast.error("User ID not found. Please log in.");
+      navigate("/login");
+      return;
+    }
+
+    // Fetch existing job seeker information
+    const fetchJobSeekerInfo = async () => {
       try {
-        const response = await axios.get(
-          `/api/http://localhost:3000/api/jobseeker/profile/:id/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        console.log("Fetched workexperience data:", response.data); // Check if it contains workexperience
-
-        // Ensure you're accessing the workexperience object
+        const data = await getJobSeekerInfo(storedUser.id);
+        // Convert ISO date to "YYYY-MM-DD" format
+        const formattedDOB = data.dob
+          ? new Date(data.dob).toISOString().split("T")[0]
+          : "";
+        // ✅ Correctly set form data with fetched info
         setFormData({
-          position: response.data.workExperience.position || "", // Now using response.data.workexperience
-          companyName: response.data.workExperience.companyName || "",
-          jobLocation: response.data.workExperience.jobLocation || "",
-          description: response.data.workExperience.description || "",
-          startDate: response.data.workExperience.startDate || "",
-          endDate: response.data.workExperience.endDate || "",
+          name: data.name || "",
+          phoneNumber: data.phoneNumber || "",
+          address: data.address || "",
+          dob: formattedDOB || "",
+          gender: data.gender || "",
         });
       } catch (error) {
-        console.error("Error fetching workExperience data:", error);
+        toast.error("Failed to fetch profile data.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWorkExperienceData();
-  }, [id]);
+    fetchJobSeekerInfo();
+  }, [storedUser?.id, navigate]);
 
-  // Handle form field changes
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await axios.put(`/api/jobseeker/profile/:id/${id}`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      navigate("/jobseeker/workexperience/info"); // Redirect to workExperience page after successful update
+      await axios.put(
+        `http://localhost:3000/api/jobseeker/profile/${storedUser.id}`,
+        formData,
+        { withCredentials: true }
+      );
+
+      toast.success("Profile updated successfully!");
+      navigate("/jobseeker/basic-details");
     } catch (error) {
-      console.error("Error updating workExperience:", error);
+      toast.error(error.response?.data?.error || "Update failed.");
     }
   };
 
-  if (loading) return <p>Loading workExperience data...</p>;
   return (
-    <>
-      <form class="space-y-6    font-[sans-serif] ">
-        <div class="flex items-center">
-          <label class="text-gray-400 w-36 text-sm">Name</label>
-          <input
-            type="text"
-            name="address"
-            placeholder="Enter your full name"
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-          />
-        </div>
-        <div class="flex items-center">
-          <label class="text-gray-400 w-36 text-sm">Phone Number</label>
-          <input
-            type="text"
-            name="address"
-            placeholder="Enter your contact no"
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-          />
-        </div>
-        <div class="flex items-center">
-          <label class="text-gray-400 w-36 text-sm">Address</label>
-          <input
-            type="text"
-            name="address"
-            placeholder="Enter your permanent address"
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-          />
-        </div>
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-md">
+      <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
 
-        <div class="flex items-center">
-          <label class="text-gray-400 w-36 text-sm">Gender</label>
-          <input
-            type="text"
-            name="gender"
-            placeholder="Enter your permanent address"
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-          />
-        </div>
+      {loading ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block font-medium">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium">Phone Number</label>
+            <input
+              type="text"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium">Date of Birth</label>
+            <input
+              type="date"
+              name="dob"
+              value={formData.dob}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium">Gender</label>
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+              required
+            >
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-        <div class="flex items-center">
-          <label class="text-gray-400 w-36 text-sm block">DOB</label>
-          <input
-            type="date"
-            name="dob"
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-          />
-        </div>
-        <div class="flex items-center">
-          <label for="degree" class="text-gray-400 w-36 text-sm">
-            Martial status
-          </label>
-          <select
-            class="px-2 py-2 w-full border-b-2 focus:border-[#333] outline-none text-sm bg-white"
-            id="degree"
-            name="degree"
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
           >
-            <option value="" disabled selected>
-              Select an option
-            </option>
-
-            <option value="married">Married</option>
-            <option value="unmarried">Unmarried</option>
-          </select>
-
-          <p id="selectedDegree"></p>
-        </div>
-
-        <button
-          type="submit"
-          class="!mt-8 px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white mx-auto block rounded-lg shadow-2xl"
-        >
-          Submit
-        </button>
-      </form>
-    </>
+            Save Changes
+          </button>
+        </form>
+      )}
+    </div>
   );
 }

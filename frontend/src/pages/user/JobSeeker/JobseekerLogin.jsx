@@ -1,8 +1,9 @@
 import axios from "axios";
+import { Mail, Lock } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
+import Cookies from "js-cookie";
 
 export default function JobseekerLogin() {
   const Validation = (userInput) => {
@@ -65,12 +66,13 @@ export default function JobseekerLogin() {
           withCredentials: true, // Ensure cookies are sent
         }
       );
+      const { token, user, message, redirectUrl } = response.data;
 
-      const { token, redirectUrl, user, message } = response.data;
+      Cookies.set("jwt", token, { expires: 7, path: "/" });
 
-      // ✅ Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
+      // ✅ Store user data in cookies (instead of localStorage)
+      Cookies.set("user", JSON.stringify(user), { expires: 7, path: "/" });
+      console.log("User Object:", user);
 
       toast.success(message || "Logged in successfully");
 

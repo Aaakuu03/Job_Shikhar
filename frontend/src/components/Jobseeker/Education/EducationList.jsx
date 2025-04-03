@@ -13,7 +13,7 @@ export default function EducationList() {
     const fetchEducation = async () => {
       try {
         const response = await axios.get("/api/education/", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         setEducationList(response.data.education);
       } catch (error) {
@@ -37,7 +37,7 @@ export default function EducationList() {
       );
       if (confirmDelete) {
         await axios.delete(`/api/education/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         // Refresh the education list after deletion
         setEducationList(

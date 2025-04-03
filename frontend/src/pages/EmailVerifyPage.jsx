@@ -13,7 +13,7 @@ export default function EmailVerifyPage() {
       try {
         // Send GET request to the backend with the token
         const response = await axios.put(
-          `http://localhost:5000/api/users/verify-email/${token}`
+          `http://localhost:3000/api/users/verify-email/${token}`
         );
         console.log("Token being sent:", token);
         if (response.status === 200) {

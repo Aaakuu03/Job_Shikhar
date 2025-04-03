@@ -5,17 +5,21 @@ dotenv.config();
 const secret = process.env.SECRET_KEY || "fallback_secret";
 
 const verifyToken = (req, res, next) => {
-  console.log("Incoming Headers:", req.headers); // Debugging headers
-  console.log("Using SECRET_KEY:", secret);
+  console.log("Incoming Headers:", req.headers);
+  console.log("Incoming Cookies:", req.cookies);
 
-  // Extract token from Authorization header or 'jwt' cookie
-  let token = req.headers["authorization"] || req.cookies?.jwt;
+  // Try getting token from cookies first
+  let token = req.cookies?.jwt;
 
-  // Handle Bearer token format
-  if (token && token.startsWith("Bearer ")) {
-    token = token.slice(7);
+  // If no token in cookies, check the Authorization header
+  if (!token) {
+    let authHeader = req.headers["authorization"];
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7);
+    }
   }
 
+  // If no token is found at all, return an error
   if (!token) {
     console.error("No token found");
     return res.status(403).json({ error: "No token provided" });

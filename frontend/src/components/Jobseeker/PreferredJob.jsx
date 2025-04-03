@@ -28,7 +28,7 @@ export default function PreferredJob() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/jobseekers/profile",
+        "http://localhost:3000/api/jobseeker/profile",
         formData,
         { withCredentials: true }
       );

@@ -20,7 +20,7 @@ export default function UpdateTraining() {
     const fetchTrainingData = async () => {
       try {
         const response = await axios.get(`/api/training/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
         console.log(response.data); // Log the response to verify the data
         setForm({
@@ -53,7 +53,7 @@ export default function UpdateTraining() {
     e.preventDefault();
     try {
       const response = await axios.put(`/api/training/update/${id}`, form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true, // ✅ Ensures cookies are sent
       });
       console.log(response.data); // Log the response to verify the data
       navigate("/jobseeker/training/info"); // Redirect after successful update

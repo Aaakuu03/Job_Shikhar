@@ -8,6 +8,8 @@ import {
   getAllPreferredJobs,
   getBasicInformationById,
   getJobSeekerDetails,
+  getNotification,
+  searchJobs,
 } from "../controller/jobseekerController.js";
 import { verifyToken } from "../middleware/jwtVerify.js";
 const jobseekerRouter = express.Router();
@@ -20,4 +22,7 @@ jobseekerRouter.get("/preferred-job/:id", verifyToken, getPreferredJobById);
 jobseekerRouter.get("/preferred-jobs", verifyToken, getAllPreferredJobs);
 jobseekerRouter.get("/info/:id", verifyToken, getBasicInformationById);
 jobseekerRouter.get("/profiledetails/:id", verifyToken, getJobSeekerDetails);
+jobseekerRouter.get("/notifications", verifyToken, getNotification);
+jobseekerRouter.get("/job/search", searchJobs);
+
 export default jobseekerRouter;

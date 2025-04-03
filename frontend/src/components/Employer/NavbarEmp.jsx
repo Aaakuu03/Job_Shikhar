@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { FaCog, FaHome, FaBuilding } from "react-icons/fa";
 
 export default function NavbarEmp() {
   return (
@@ -45,20 +46,7 @@ export default function NavbarEmp() {
         <button className="btn btn-ghost btn-circle w-20">
           <div className="flex flex-col items-center">
             <div className="indicator">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.6"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                />
-              </svg>
+              <FaHome size={20} />
             </div>
             <span className="btm-nav-label mt-2">Home</span>
           </div>
@@ -68,47 +56,23 @@ export default function NavbarEmp() {
           <button className="btn btn-ghost btn-circle w-20">
             <div className="flex flex-col items-center">
               <div className="indicator">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 12.25V1m0 11.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M4 19v-2.25m6-13.5V1m0 2.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M10 19V7.75m6 4.5V1m0 11.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM16 19v-2"
-                  />
-                </svg>
+                <FaCog size={20} />
               </div>
               <span className="btm-nav-label mt-2 ">Setting</span>
             </div>
           </button>
         </NavLink>
 
-        <button className="btn btn-ghost btn-circle w-20">
-          <div className="flex flex-col items-center">
-            <div className="indicator">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 4h12M6 4v16M6 4H5m13 0v16m0-16h1m-1 16H6m12 0h1M6 20H5M9 7h1v1H9V7Zm5 0h1v1h-1V7Zm-5 4h1v1H9v-1Zm5 0h1v1h-1v-1Zm-3 4h2a1 1 0 0 1 1 1v4h-4v-4a1 1 0 0 1 1-1Z"
-                />
-              </svg>
+        <NavLink to="/employer/profile">
+          <button className="btn btn-ghost btn-circle w-20">
+            <div className="flex flex-col items-center">
+              <div className="indicator">
+                <FaBuilding size={20} />
+              </div>
+              <span className="btm-nav-label mt-2 ">Company Profile</span>
             </div>
-            <span className="btm-nav-label mt-2 ">Company Profile</span>
-          </div>
-        </button>
+          </button>
+        </NavLink>
 
         <div className="  dropdown dropdown-end aria-controls">
           <div

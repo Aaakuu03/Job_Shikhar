@@ -20,5 +20,4 @@ userRouter.post("/reset-password/:token", resetPassword);
 userRouter.post("/employer/register", employerRegister);
 userRouter.post("/admin/login", adminLogin);
 userRouter.post("/admin/register", adminRegister);
-
 export default userRouter;

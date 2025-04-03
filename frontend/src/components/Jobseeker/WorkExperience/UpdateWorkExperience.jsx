@@ -25,7 +25,7 @@ export default function UpdateWorkExperience() {
     const fetchWorkExperienceData = async () => {
       try {
         const response = await axios.get(`/api/workexperience/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true, // ✅ Ensures cookies are sent
         });
 
         console.log("Fetched workexperience data:", response.data); // Check if it contains workexperience
@@ -63,7 +63,7 @@ export default function UpdateWorkExperience() {
     e.preventDefault();
     try {
       await axios.put(`/api/workexperience/update/${id}`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true, // ✅ Ensures cookies are sent
       });
       navigate("/jobseeker/workexperience/info"); // Redirect to workExperience page after successful update
     } catch (error) {

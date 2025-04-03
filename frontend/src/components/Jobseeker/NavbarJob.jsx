@@ -14,7 +14,7 @@ export default function NavbarJob() {
           "
           />
           <div className="text-3xl font-bold  group">
-            <NavLink to="/jobseeker/dashboard">
+            <NavLink to="/jobseeker/home">
               <span className="text-customGray group-hover:text-customSil">
                 Job
               </span>
@@ -107,7 +107,7 @@ export default function NavbarJob() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <NavLink to="/jobseeker/update">
+              <NavLink to="/jobseeker/basic-details">
                 <a className="justify-between">Edit Profile</a>
               </NavLink>
             </li>

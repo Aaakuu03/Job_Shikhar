@@ -1,9 +1,24 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { HiOfficeBuilding } from "react-icons/hi";
 import { FaSignInAlt, FaUserTie } from "react-icons/fa";
 import { MdLogin } from "react-icons/md";
 import { AiOutlineLogin, AiOutlineUserAdd } from "react-icons/ai";
+
+const jobCategories = [
+  "SOFTWARE_DEVELOPMENT",
+  "DATA_SCIENCE_AI",
+  "NETWORKING_CYBERSECURITY",
+  "ACCOUNTING_FINANCE",
+  "SALES_MARKETING",
+  "HEALTHCARE_MEDICAL",
+  "TEACHING_EDUCATION",
+  "MECHANICAL_ENGINEERING",
+  "CUSTOMER_SUPPORT",
+  "GRAPHIC_DESIGN_MULTIMEDIA",
+  "HUMAN_RESOURCES",
+  "TRANSPORT_LOGISTICS",
+];
 export default function Navbar() {
   return (
     <div className="navbar bg-base-100  cursor-pointer px-10 shadow-lg">
@@ -29,19 +44,30 @@ export default function Navbar() {
       </div>
       <div className="navbar-center hidden lg:flex font-bold text-customGray ">
         <ul className="menu menu-horizontal   ">
-          <li>
+          <li className="dropdown dropdown-center">
             <details>
               <summary>Browse Jobs</summary>
-              <ul className="p-2">
-                <li>
-                  <a>Submenu 1</a>
-                </li>
-                <li>
-                  <a>Submenu 2</a>
-                </li>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu bg-base-100 rounded-box shadow  p-4 grid grid-cols-4 gap-4 min-w-[800px]  origin-left absolute z-50"
+              >
+                {jobCategories.map((category) => (
+                  <li key={category} className="px-3">
+                    <Link
+                      to={`/jobs/category/${category.toUpperCase()}`}
+                      className="block text-sm font-semibold text-gray-700 hover:text-customSil transition whitespace-nowrap cursor-pointer"
+                    >
+                      {category
+                        .replace(/_/g, " ")
+                        .toLowerCase()
+                        .replace(/\b\w/g, (char) => char.toUpperCase())}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </details>
           </li>
+
           <li>
             <NavLink to="/blogs">
               <a>Blogs</a>

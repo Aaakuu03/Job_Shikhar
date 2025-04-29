@@ -14,7 +14,9 @@ export default function BasicInformationForm() {
     address: "",
     dob: "",
     gender: "",
+    imageUrl: "", // Store URL for preview
   });
+  const [imageFile, setImageFile] = useState(null); // Store file separately
 
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,7 @@ export default function BasicInformationForm() {
           address: data.address || "",
           dob: formattedDOB || "",
           gender: data.gender || "",
+          imageUrl: data.imageUrl || "", // Get image from jobseeker table
         });
       } catch (error) {
         toast.error("Failed to fetch profile data.");
@@ -54,14 +57,27 @@ export default function BasicInformationForm() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const form = new FormData();
+    form.append("name", formData.name);
+    form.append("phoneNumber", formData.phoneNumber);
+    form.append("address", formData.address);
+    form.append("dob", formData.dob);
+    form.append("gender", formData.gender);
+    if (imageFile) {
+      form.append("image", imageFile); // ✅ this was wrong before
+    }
+
     try {
       await axios.put(
         `http://localhost:3000/api/jobseeker/profile/${storedUser.id}`,
-        formData,
+        form,
         { withCredentials: true }
       );
 
@@ -73,7 +89,7 @@ export default function BasicInformationForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-md">
+    <div className="max-w-2xl mx-auto p-6 m-3 bg-white shadow-md rounded-md">
       <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
 
       {loading ? (
@@ -138,6 +154,30 @@ export default function BasicInformationForm() {
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Current Image
+            </label>
+            {formData.imageUrl && !imageFile && (
+              <img
+                src={`http://localhost:5000${formData.imageUrl}`}
+                alt="Current menu item"
+                className="w-20 h-20 object-cover rounded mt-2"
+              />
+            )}
+          </div>
+
+          {/* File Upload */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Upload New Image
+            </label>
+            <input
+              type="file"
+              onChange={handleImageChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
           </div>
 
           <button

@@ -1,7 +1,27 @@
 import { PrismaClient } from "@prisma/client";
 
+import path from "path";
+import fs from "fs";
+import multer from "multer";
 const prisma = new PrismaClient();
+// Set up multer storage for handling image uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "./uploads";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir); // Ensure the 'uploads' folder exists
+    }
+    cb(null, dir); // Save files to the 'uploads' folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to the filename
+  },
+});
 
+const upload = multer({ storage }); // Configure multer with the storage settings
+
+// Middleware for handling file uploads
+const uploadImage = upload.single("image"); // Use 'image' field name for the file
 // Get Job Seeker Profile
 const getJobSeekerProfile = async (req, res) => {
   console.log("req.userId:", req.userId); // Check if userId is present
@@ -25,56 +45,82 @@ const getJobSeekerProfile = async (req, res) => {
 };
 
 // Update Job Seeker Profile
+// Update Job Seeker Profile
 const updateJobSeekerProfile = async (req, res) => {
   try {
     const { name, phoneNumber, address, dob, gender, maritalStatus } = req.body;
+    let imageUrl = null;
 
     if (!req.userId) {
       return res.status(400).json({ error: "User ID is missing from token." });
     }
 
-    // Ensure the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.userId },
-    });
+    // Upload image and continue inside callback
+    uploadImage(req, res, async (err) => {
+      if (err) {
+        return res
+          .status(400)
+          .json({ message: "Image upload failed", error: err.message });
+      }
 
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
+      if (req.file) {
+        imageUrl = `/uploads/${req.file.filename}`; // Save the new image URL
+      }
+      // Validate and convert date of birth
+      let parsedDOB = undefined;
+      if (dob && !isNaN(Date.parse(dob))) {
+        parsedDOB = new Date(dob);
+      } else if (dob) {
+        return res.status(400).json({ error: "Invalid date of birth." });
+      }
 
-    // Ensure the JobSeeker profile exists
-    const existingProfile = await prisma.jobSeeker.findUnique({
-      where: { userId: req.userId },
-    });
+      // Ensure the user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id: req.userId },
+      });
 
-    if (!existingProfile) {
-      return res.status(404).json({ error: "Job seeker profile not found." });
-    }
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found." });
+      }
 
-    // Update the User table (for name and phone)
-    const updatedUser = await prisma.user.update({
-      where: { id: req.userId },
-      data: {
-        name,
-        phoneNumber,
-      },
-    });
+      // Ensure the JobSeeker profile exists
+      const existingProfile = await prisma.jobSeeker.findUnique({
+        where: { userId: req.userId },
+      });
 
-    // Update the Jobseeker table (for address, dob, gender, marital status)
-    const updatedJobseeker = await prisma.jobSeeker.update({
-      where: { userId: req.userId },
-      data: {
-        address,
-        dob: new Date(dob),
-        gender,
-        maritalStatus,
-      },
-    });
+      if (!existingProfile) {
+        return res.status(404).json({ error: "Job seeker profile not found." });
+      }
 
-    res.status(200).json({
-      message: "Jobseeker information updated successfully",
-      updatedUser,
-      updatedJobseeker,
+      // Update the User table (for name, phoneNumber, image)
+      const updatedUser = await prisma.user.update({
+        where: { id: req.userId },
+        data: {
+          name,
+          phoneNumber,
+        },
+      });
+
+      // Prepare conditional update data
+      const jobSeekerUpdateData = {};
+      if (address) jobSeekerUpdateData.address = address;
+      if (parsedDOB) jobSeekerUpdateData.dob = parsedDOB;
+      if (gender) jobSeekerUpdateData.gender = gender;
+      if (typeof maritalStatus !== "undefined")
+        jobSeekerUpdateData.maritalStatus = maritalStatus;
+      if (imageUrl) jobSeekerUpdateData.imageUrl = imageUrl;
+
+      // Update job seeker
+      const updatedJobseeker = await prisma.jobSeeker.update({
+        where: { userId: req.userId },
+        data: jobSeekerUpdateData,
+      });
+
+      res.status(200).json({
+        message: "Jobseeker information updated successfully",
+        updatedUser,
+        updatedJobseeker,
+      });
     });
   } catch (error) {
     console.error("Error updating jobseeker information:", error);
@@ -132,86 +178,95 @@ const updatePreferredJob = async (req, res) => {
   }
 };
 
-// controllers/jobSeekerController.js
 const createJobSeekerProfile = async (req, res) => {
-  try {
-    const {
-      dob,
-      gender,
-      address,
-      preferredJobLocation,
-      jobType,
-      expectedSalary,
-      currency,
-      salaryType,
-      salaryFrequency,
-      skills,
-    } = req.body;
-
-    // Ensure required fields are provided (if applicable)
-    if (!req.userId) {
-      return res.status(400).json({ error: "User ID is missing from token." });
-    }
-
-    // Ensure the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.userId },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Check if the JobSeeker profile already exists
-    const existingProfile = await prisma.jobSeeker.findUnique({
-      where: { userId: req.userId },
-    });
-
-    if (existingProfile) {
+  uploadImage(req, res, async (err) => {
+    if (err) {
       return res
         .status(400)
-        .json({ error: "Job seeker profile already exists." });
+        .json({ message: "Image upload failed", error: err.message });
     }
-
-    // Create the JobSeeker profile
-    const newProfile = await prisma.jobSeeker.create({
-      data: {
-        userId: req.userId,
-        dob: new Date(dob), // Ensure ISO-8601 format (e.g., "1995-08-15")
-        gender: gender,
-        jobType: jobType,
-        address: address,
-        expectedSalary: parseInt(expectedSalary, 10),
+    try {
+      const {
+        dob,
+        gender,
+        address,
+        preferredJobLocation,
+        jobType,
+        expectedSalary,
         currency,
         salaryType,
         salaryFrequency,
-        preferredJobLocation: preferredJobLocation,
-        skills: skills,
-      },
-      include: {
-        user: true,
-      },
-    });
+        skills,
+      } = req.body;
 
-    // Update `isFormFilled` to true after successful profile creation
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { isFormFilled: true },
-    });
+      // Ensure required fields are provided (if applicable)
+      if (!req.userId) {
+        return res
+          .status(400)
+          .json({ error: "User ID is missing from token." });
+      }
 
-    res.status(201).json({
-      message: "Job seeker profile created successfully.",
-      profile: newProfile,
-    });
-  } catch (error) {
-    console.error("Error creating job seeker profile:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      details: error.message,
-    });
-  }
+      // Ensure the user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id: req.userId },
+      });
+
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      // Check if the JobSeeker profile already exists
+      const existingProfile = await prisma.jobSeeker.findUnique({
+        where: { userId: req.userId },
+      });
+
+      if (existingProfile) {
+        return res
+          .status(400)
+          .json({ error: "Job seeker profile already exists." });
+      }
+      const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the image URL
+
+      // Create the JobSeeker profile
+      const newProfile = await prisma.jobSeeker.create({
+        data: {
+          userId: req.userId,
+          dob: new Date(dob), // Ensure ISO-8601 format (e.g., "1995-08-15")
+          gender: gender,
+          jobType: jobType,
+          address: address,
+          expectedSalary: parseInt(expectedSalary, 10),
+          currency,
+          salaryType,
+          salaryFrequency,
+          preferredJobLocation: preferredJobLocation,
+          skills: skills,
+          imageUrl,
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      // Update `isFormFilled` to true after successful profile creation
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { isFormFilled: true },
+      });
+
+      res.status(201).json({
+        message: "Job seeker profile created successfully.",
+        profile: newProfile,
+      });
+    } catch (error) {
+      console.error("Error creating job seeker profile:", error);
+      res.status(500).json({
+        error: "Internal Server Error",
+        details: error.message,
+      });
+    }
+  });
 };
-
 // Get Preferred Job Information by ID
 const getPreferredJobById = async (req, res) => {
   try {
@@ -306,6 +361,7 @@ const getBasicInformationById = async (req, res) => {
       dob: user.jobSeeker.dob,
       gender: user.jobSeeker.gender,
       address: user.jobSeeker.address,
+      imageUrl: user.jobSeeker.imageUrl,
     };
 
     return res.status(200).json({ basicInfo });
@@ -346,6 +402,7 @@ const getJobSeekerDetails = async (req, res) => {
             salaryFrequency: true,
             jobType: true,
             preferredJobLocation: true,
+            imageUrl: true,
             skills: true,
             education: {
               select: {
@@ -411,6 +468,8 @@ const getJobSeekerDetails = async (req, res) => {
         salaryFrequency: jobSeeker.salaryFrequency,
         jobType: jobSeeker.jobType,
         preferredJobLocation: jobSeeker.preferredJobLocation,
+        imageUrl: jobSeeker.imageUrl,
+
         skills: jobSeeker.skills.split(",").map((skill) => skill.trim()), // Convert skills to array
       },
       education: jobSeeker.education,
@@ -486,7 +545,31 @@ const searchJobs = async (req, res) => {
           { description: { contains: keyword } },
           { requirement: { contains: keyword } },
           { salary: { contains: keyword } },
+          {
+            employer: {
+              OR: [
+                { contactName: { contains: keyword } },
+                { aboutCompany: { contains: keyword } },
+                { address: { contains: keyword } },
+                {
+                  user: {
+                    OR: [
+                      { name: { contains: keyword } },
+                      { email: { contains: keyword } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
+      },
+      include: {
+        employer: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 
@@ -503,6 +586,44 @@ const searchJobs = async (req, res) => {
     res.status(500).json({ message: "Error searching jobs" });
   }
 };
+
+// const searchJobs = async (req, res) => {
+//   console.log("✅ Route Hit!"); // Confirm route is being called
+
+//   try {
+//     const { keyword, jobType } = req.query; // Capture jobType filter
+//     console.log("🔍 Received Keyword:", keyword, "Job Type:", jobType); // Log received keyword and jobType
+
+//     if (!keyword) {
+//       console.log("🛑 No keyword provided!");
+//       return res.status(400).json({ message: "Keyword is required" });
+//     }
+
+//     const jobs = await prisma.job.findMany({
+//       where: {
+//         OR: [
+//           { title: { contains: keyword, mode: "insensitive" } },
+//           { description: { contains: keyword, mode: "insensitive" } },
+//           { requirement: { contains: keyword, mode: "insensitive" } },
+//           { salary: { contains: keyword, mode: "insensitive" } },
+//         ],
+//         jobType: jobType ? jobType.toUpperCase() : undefined, // Filter by job type if provided
+//       },
+//     });
+
+//     console.log("📝 Query Result:", jobs);
+
+//     if (jobs.length === 0) {
+//       console.log("🚨 No jobs found for keyword:", keyword);
+//       return res.status(404).json({ message: "Job not found" });
+//     }
+
+//     res.status(200).json(jobs);
+//   } catch (error) {
+//     console.error("❌ Error in searchJobs:", error);
+//     res.status(500).json({ message: "Error searching jobs" });
+//   }
+// };
 
 export {
   getJobSeekerProfile,

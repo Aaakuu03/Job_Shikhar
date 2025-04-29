@@ -25,7 +25,9 @@ export default function EditEmpProfile() {
     contactName: "",
     phone: "",
     aboutCompany: "",
+    imageUrl: "", // Store URL for preview
   });
+  const [imageFile, setImageFile] = useState(null); // Store file separately
 
   const industryTypes = [
     "IT_SOFTWARE",
@@ -55,6 +57,7 @@ export default function EditEmpProfile() {
             contactName: response.companyDetails.contactName || "",
             phone: response.companyDetails.phone || "",
             aboutCompany: response.companyDetails.aboutCompany || "",
+            imageUrl: response.companyDetails.imageUrl || "",
           });
         } else {
           toast.error("No employer data found.");
@@ -72,13 +75,26 @@ export default function EditEmpProfile() {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const form = new FormData();
+    form.append("industryType", formData.industryType);
+    form.append("address", formData.address);
+    form.append("companySize", formData.companySize);
+    form.append("contactName", formData.contactName);
+    form.append("phone", formData.phone);
+    form.append("aboutCompany", formData.aboutCompany);
+    if (imageFile) {
+      form.append("image", imageFile); // ✅ this was wrong before
+    }
     try {
       const response = await axios.put(
         `http://localhost:3000/api/employers/profile/${id}`,
-        formData,
+        form,
         {
           withCredentials: true, // ✅ Ensures cookies are sent
         }
@@ -243,6 +259,30 @@ export default function EditEmpProfile() {
               placeholder="Tell us about your company"
             />
           </div>
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Current Image
+          </label>
+          {formData.imageUrl && !imageFile && (
+            <img
+              src={`http://localhost:5000${formData.imageUrl}`}
+              alt="Current menu item"
+              className="w-20 h-20 object-cover rounded mt-2"
+            />
+          )}
+        </div>
+
+        {/* File Upload */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Upload New Image
+          </label>
+          <input
+            type="file"
+            onChange={handleImageChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          />
         </div>
 
         {/* Submit Button */}

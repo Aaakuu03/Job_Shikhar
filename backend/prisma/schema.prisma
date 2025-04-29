@@ -24,6 +24,7 @@ model User {
   token    Token[]
   employer Employer[]
   jobSeeker  JobSeeker?
+  
 }
 model Token {
   id     String     @id @default(cuid()) 
@@ -35,6 +36,7 @@ model Token {
 model JobSeeker {
   id                      String       @id @default(cuid()) // Changed to CUID
   userId                  String       @unique
+  imageUrl                String
   dob                     DateTime? 
   gender                  String?
   user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -53,6 +55,7 @@ model JobSeeker {
   training                Training[]
   workExperience          WorkExperience[]
   notifications           Notification[]
+   wishlist              Wishlist[]
 }
 
 model Education {
@@ -103,10 +106,13 @@ model Employer {
   contactName    String
   phone          String
   aboutCompany   String 
+  imageUrl       String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   job            Job[]
   employerPackage  EmployerPackage?
+  payments      Payment[] // One-to-many payments
+
 }
 
 model Admin {
@@ -119,8 +125,9 @@ model Admin {
 model Job {
   id                  String       @id @default(cuid()) // Changed to CUID
   title               String
-  category            JobCategory
-  description         String
+  categoryId          String
+  category            JobCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)  
+  description         String?
   createdAt           DateTime @default(now())
   employer            Employer      @relation(fields: [employerId], references: [id], onDelete: Cascade)
   employerId          String
@@ -132,6 +139,8 @@ model Job {
   experience          String?
   jobSeeker           JobSeeker[]
   application         Application[]
+    wishlist            Wishlist[]   // Add relation to Wishlist
+
 }
 
 
@@ -141,7 +150,10 @@ model PricingPackage {
   price     Float
   jobLimit  Int
   duration  Int  
+  description String?
   employerPackages EmployerPackage[] // Back-reference
+  payments         Payment[]          // 🔁 Add this line
+
 }
 
 model EmployerPackage {
@@ -152,6 +164,23 @@ model EmployerPackage {
   packageId  String
   expiresAt  DateTime
   jobCount   Int @default(0) // Tracks number of jobs posted under this package
+  payments   Payment[]  // 🔁 Back-reference added
+
+}
+
+model Payment {
+  id             String           @id @default(uuid())
+  employer       Employer         @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  employerId     String
+  employerPackage EmployerPackage? @relation(fields: [employerPackageId], references: [id], onDelete: SetNull)
+  employerPackageId String?
+  package        PricingPackage   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId      String
+  amount         Float
+  method         String
+  status         String
+  transactionId       String   @unique
+  createdAt      DateTime         @default(now())
 }
 model Application {
   id                String   @id @default(cuid()) // Changed to CUID
@@ -163,6 +192,16 @@ model Application {
   appliedAt    DateTime @default(now())
 
 }
+model Wishlist {
+  id            String   @id @default(cuid())
+  userId        String   
+  jobSeekerId   String   // Track the JobSeeker who added the job to the wishlist
+  jobSeeker     JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+}
+
 
 model Notification {
   id          String   @id @default(cuid())
@@ -200,17 +239,10 @@ enum IndustryType {
   CONSTRUCTION_ENGINEERING
 }
 
-enum JobCategory {
-  SOFTWARE_DEVELOPMENT
-  DATA_SCIENCE_AI
-  NETWORKING_CYBERSECURITY
-  ACCOUNTING_FINANCE
-  SALES_MARKETING
-  HEALTHCARE_MEDICAL
-  TEACHING_EDUCATION
-  MECHANICAL_ENGINEERING
-  CUSTOMER_SUPPORT
-  GRAPHIC_DESIGN_MULTIMEDIA
-  HUMAN_RESOURCES
-  TRANSPORT_LOGISTICS
+model JobCategory {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  jobs  Job[]
 }
+
+

@@ -60,11 +60,12 @@ const jobSeekerRegister = async (req, res) => {
         phoneNumber,
         password: hashedPassword,
         verificationToken,
+        userType: "JOBSEEKER", // ✅ Set userType
       },
     });
 
     // Prepare verification email
-    const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+    const verificationLink = `http://localhost:3000/verify-email/JOBSEEKER/${verificationToken}`;
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
@@ -105,15 +106,20 @@ const jobSeekerRegister = async (req, res) => {
 
 // Verify Email
 const verifyEmail = async (req, res) => {
-  const { token } = req.params; // Extract token from the URL
+  const { token, userType } = req.params; // Extract token from the URL
 
   console.log("Received token:", token); // Log the received token for debugging
   try {
+    // Check that userType is valid (either JOBSEEKER or EMPLOYER)
+    if (!["JOBSEEKER", "EMPLOYER"].includes(userType.toUpperCase())) {
+      return res.status(400).json({ message: "Invalid user type." });
+    }
     // Find the user by verificationToken
     const matchingUser = await prisma.user.findFirst({
       where: {
         verificationToken: token, // Look for the user with the given token
         isVerified: false, // Ensure they are not already verified
+        userType: userType.toUpperCase(), // Verify based on userType
       },
     });
 
@@ -238,7 +244,89 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const userLogin = async (req, res) => {
+// const userLogin = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || !password) {
+//       return res.status(400).json({ message: "Please fill all fields." });
+//     }
+
+//     // Find user with role check
+//     const user = await prisma.user.findUnique({
+//       where: { email },
+//     });
+
+//     if (!user) {
+//       return res.status(400).json({ message: "User not found." });
+//     }
+
+//     // Validate password
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res.status(400).json({ message: "Invalid credentials." });
+//     }
+
+//     const token = jwt.sign(
+//       { userId: user.id, userType: user.userType },
+//       secret,
+//       {
+//         expiresIn: "6h",
+//       }
+//     );
+
+//     // Store the token in the database (optional)
+//     await prisma.token.create({
+//       data: {
+//         token: token,
+//         userId: user.id,
+//       },
+//     });
+
+//     // Determine redirect URL
+//     let redirectUrl;
+//     if (!user.isFormFilled) {
+//       redirectUrl =
+//         user.userType === "JOBSEEKER"
+//           ? "/jobseeker/fill-form"
+//           : "/employer/form";
+//     } else if (user.userType === "JOBSEEKER") {
+//       redirectUrl = "/jobseeker/dashboard";
+//     } else if (user.userType === "EMPLOYER") {
+//       redirectUrl = "/employer/dashboard";
+//     } else {
+//       return res.status(400).json({ message: "Invalid user type." });
+//     }
+//     // Set cookie & send response
+
+//     res.cookie("jwt", token, {
+//       httpOnly: true, // Secures cookie against XSS
+//       secure: process.env.NODE_ENV === "production", // HTTPS in production
+//       sameSite: "Strict", // CSRF protection
+//       maxAge: 6 * 60 * 60 * 1000, // 6 hours
+//     });
+//     console.log("Generated JWT:", token);
+//     return res.status(200).json({
+//       message: "User logged in successfully.",
+//       user: {
+//         id: user.id,
+//         name: user.name,
+//         email: user.email,
+//         userType: user.userType,
+//         jobSeekerId: user.jobSeeker?.id || null, // Include jobSeekerId if available
+//       },
+//       redirectUrl,
+//       token,
+//     });
+//   } catch (error) {
+//     console.error("Login Error:", error);
+//     return res.status(500).json({
+//       message: "An error occurred during login.",
+//       error: error.message,
+//     });
+//   }
+// };
+const jobSeekerLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -246,7 +334,6 @@ const userLogin = async (req, res) => {
       return res.status(400).json({ message: "Please fill all fields." });
     }
 
-    // Find user with role check
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -259,6 +346,10 @@ const userLogin = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: "Invalid credentials." });
+    }
+
+    if (user.userType !== "JOBSEEKER") {
+      return res.status(400).json({ message: "Invalid user type." });
     }
 
     const token = jwt.sign(
@@ -277,45 +368,109 @@ const userLogin = async (req, res) => {
       },
     });
 
-    // Determine redirect URL
-    let redirectUrl;
-    if (!user.isFormFilled) {
-      redirectUrl =
-        user.userType === "JOBSEEKER"
-          ? "/jobseeker/fill-form"
-          : "/employer/form";
-    } else if (user.userType === "JOBSEEKER") {
-      redirectUrl = "/jobseeker/dashboard";
-    } else if (user.userType === "EMPLOYER") {
-      redirectUrl = "/employer/dashboard";
-    } else {
-      return res.status(400).json({ message: "Invalid user type." });
-    }
-    // Set cookie & send response
+    let redirectUrl = user.isFormFilled
+      ? "/jobseeker/dashboard"
+      : "/jobseeker/fill-form";
 
+    // Set cookie & send response
     res.cookie("jwt", token, {
-      httpOnly: true, // Secures cookie against XSS
-      secure: process.env.NODE_ENV === "production", // HTTPS in production
-      sameSite: "Strict", // CSRF protection
-      maxAge: 6 * 60 * 60 * 1000, // 6 hours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 6 * 60 * 60 * 1000,
     });
-    console.log("Generated JWT:", token);
+    console.log("Issued token:", token);
+
     return res.status(200).json({
-      message: "User logged in successfully.",
+      message: "JobSeeker logged in successfully.",
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         userType: user.userType,
-        jobSeekerId: user.jobSeeker?.id || null, // Include jobSeekerId if available
+        jobSeekerId: user.jobSeeker?.id || null,
       },
       redirectUrl,
       token,
     });
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error("JobSeeker Login Error:", error);
     return res.status(500).json({
-      message: "An error occurred during login.",
+      message: "An error occurred during JobSeeker login.",
+      error: error.message,
+    });
+  }
+};
+const employerLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please fill all fields." });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Incorrect Email or Passord" });
+    }
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid credentials." });
+    }
+
+    if (user.userType !== "EMPLOYER") {
+      return res.status(400).json({ message: "Invalid user type." });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, userType: user.userType },
+      secret,
+      {
+        expiresIn: "6h",
+      }
+    );
+
+    // Store the token in the database (optional)
+    await prisma.token.create({
+      data: {
+        token: token,
+        userId: user.id,
+      },
+    });
+
+    let redirectUrl = user.isFormFilled
+      ? "/employer/dashboard"
+      : "/employer/form";
+
+    // Set cookie & send response
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 6 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: "Employer logged in successfully.",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+        employerId: user.employer?.id || null,
+      },
+      redirectUrl,
+      token,
+    });
+  } catch (error) {
+    console.error("Employer Login Error:", error);
+    return res.status(500).json({
+      message: "An error occurred during Employer login.",
       error: error.message,
     });
   }
@@ -363,7 +518,7 @@ const employerRegister = async (req, res) => {
     });
 
     // Prepare verification email
-    const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+    const verificationLink = `http://localhost:3000/verify-email/EMPLOYER/${verificationToken}`;
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
@@ -392,81 +547,81 @@ const employerRegister = async (req, res) => {
       .json({ message: "Error registering user", error: error.message });
   }
 };
-//Admin Login
-const adminLogin = async (req, res) => {
-  const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Please fill all fields" });
-  }
+// //Admin Login
+// const adminLogin = async (req, res) => {
+//   const { email, password } = req.body;
 
-  try {
-    const admin = await prisma.admin.findUnique({
-      where: {
-        email,
-      },
-    });
+//   if (!email || !password) {
+//     return res.status(400).json({ message: "Please fill all fields" });
+//   }
 
-    if (!admin) {
-      return res.status(400).json({ message: "Admin not found" });
-    }
+//   try {
+//     const admin = await prisma.admin.findUnique({
+//       where: {
+//         email,
+//       },
+//     });
 
-    if (admin.password !== password) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+//     if (!admin) {
+//       return res.status(400).json({ message: "Admin not found" });
+//     }
 
-    const token = jwt.sign({ admin }, "casdkjfqheiru23", { expiresIn: "1h" });
+//     if (admin.password !== password) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
 
-    return res
-      .status(200)
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV == "production",
-      })
-      .json({ message: "Admin logged in successfully", admin, token });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Admin not found", error: error.message });
-  }
-};
+//     const token = jwt.sign({ admin }, "casdkjfqheiru23", { expiresIn: "1h" });
 
-//Admin Register
-const adminRegister = async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !password || !email) {
-    return res.status(400).json({ message: "Please fill all fields." });
-  }
-  try {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const admin = await prisma.admin.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
-    if (!admin) {
-      return res.status(400).json({ message: "Admin not created." });
-    }
-    return res
-      .status(201)
-      .json({ message: "Admin created successfully", admin });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Admin not created", error: error.message });
-  }
-};
+//     return res
+//       .status(200)
+//       .cookie("token", token, {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV == "production",
+//       })
+//       .json({ message: "Admin logged in successfully", admin, token });
+//   } catch (error) {
+//     return res
+//       .status(400)
+//       .json({ message: "Admin not found", error: error.message });
+//   }
+// };
+
+// //Admin Register
+// const adminRegister = async (req, res) => {
+//   const { name, email, password } = req.body;
+//   if (!name || !password || !email) {
+//     return res.status(400).json({ message: "Please fill all fields." });
+//   }
+//   try {
+//     const saltRounds = 10;
+//     const hashedPassword = await bcrypt.hash(password, saltRounds);
+//     const admin = await prisma.admin.create({
+//       data: {
+//         name,
+//         email,
+//         password: hashedPassword,
+//       },
+//     });
+//     if (!admin) {
+//       return res.status(400).json({ message: "Admin not created." });
+//     }
+//     return res
+//       .status(201)
+//       .json({ message: "Admin created successfully", admin });
+//   } catch (error) {
+//     return res
+//       .status(400)
+//       .json({ message: "Admin not created", error: error.message });
+//   }
+// };
 
 export {
-  userLogin,
+  jobSeekerLogin,
+  employerLogin,
   jobSeekerRegister,
   employerRegister,
   verifyEmail,
   sendResetPasswordEmail,
   resetPassword,
-  adminLogin,
-  adminRegister,
 };

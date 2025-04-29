@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -22,36 +22,41 @@ const jobTypes = [
   "TEMPORARY",
 ];
 
-const categoryTypes = [
-  "SOFTWARE_DEVELOPMENT",
-  "DATA_SCIENCE_AI",
-  "NETWORKING_CYBERSECURITY",
-  "ACCOUNTING_FINANCE",
-  "SALES_MARKETING",
-  "HEALTHCARE_MEDICAL",
-  "TEACHING_EDUCATION",
-  "MECHANICAL_ENGINEERING",
-  "CUSTOMER_SUPPORT",
-  "GRAPHIC_DESIGN_MULTIMEDIA",
-  "HUMAN_RESOURCES",
-  "TRANSPORT_LOGISTICS",
-];
-
 const JobPostForm = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
+
   const [formData, setFormData] = useState({
     title: "",
-    category: "",
+    categoryId: "",
     description: "",
     applicationDeadline: "",
     requirement: "",
     jobLocation: "",
-    jobType: jobTypes[0],
+    jobType: "",
     salary: "",
     experience: "",
   });
 
   const [loading, setLoading] = useState(false);
+  // Fetch categories from the backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/employers/category",
+          { withCredentials: true }
+        );
+
+        setCategories(response.data);
+      } catch (err) {
+        setError("Failed to load categories");
+        toast.error("Failed to load categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Handle form input change
   const handleChange = (e) => {
@@ -74,7 +79,6 @@ const JobPostForm = () => {
     }
 
     setLoading(true);
-    toast.loading("Posting job...", { id: "jobPost" });
 
     try {
       const formattedDeadline = new Date(
@@ -99,12 +103,12 @@ const JobPostForm = () => {
       // Reset form
       setFormData({
         title: "",
-        category: "",
+        categoryId: "",
         description: "",
         applicationDeadline: "",
         requirement: "",
         jobLocation: "",
-        jobType: jobTypes[0],
+        jobType: "",
         salary: "",
         experience: "",
       });
@@ -145,16 +149,16 @@ const JobPostForm = () => {
         <div className="relative mb-4">
           <FaList className="absolute left-3 top-3 text-gray-500" />
           <select
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleChange}
             className="pl-10 w-full border p-2 rounded"
             required
           >
-            <option value="">Select Category</option>
-            {categoryTypes.map((category, index) => (
-              <option key={index} value={category}>
-                {category.replace("_", " ")} {/* Display user-friendly text */}
+            <option value="">Select a Category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -175,6 +179,11 @@ const JobPostForm = () => {
 
         {/* Application Deadline */}
         <div className="relative mb-4">
+          {formData.applicationDeadline === "" && (
+            <span className="absolute left-10 top-0 text-gray-400 pointer-events-none text-sm">
+              Application Deadline
+            </span>
+          )}
           <FaCalendarAlt className="absolute left-3 top-3 text-gray-500" />
           <input
             type="date"
@@ -226,6 +235,9 @@ const JobPostForm = () => {
             className="pl-10 w-full border p-2 rounded"
             required
           >
+            <option value="" disabled hidden>
+              Select an employment type
+            </option>{" "}
             {jobTypes.map((type, index) => (
               <option key={index} value={type}>
                 {type.replace("_", " ")} {/* Display user-friendly text */}
@@ -266,7 +278,7 @@ const JobPostForm = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-800 text-white py-2 rounded transition"
+          className="w-full bg-[#404040] hover:bg-[#2B2B2B] text-[#F9FAFB] py-2 rounded transition"
         >
           {loading ? "Posting..." : "Post Job"}
         </button>

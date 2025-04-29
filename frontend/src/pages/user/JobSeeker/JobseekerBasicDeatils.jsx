@@ -61,6 +61,15 @@ export default function JobseekerBasicDeatils() {
                 <p>
                   <strong>Name:</strong> {jobSeeker.name || "N/A"}
                 </p>
+                {jobSeeker.imageUrl ? (
+                  <img
+                    src={`http://localhost:5000${jobSeeker.imageUrl}`}
+                    alt={jobSeeker.name}
+                    className="w-16 h-16 object-cover"
+                  />
+                ) : (
+                  <span>No Image</span>
+                )}
                 <p>
                   <strong>Phone Number:</strong>{" "}
                   {jobSeeker.phoneNumber || "N/A"}

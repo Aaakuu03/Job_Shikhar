@@ -21,27 +21,14 @@ const jobTypes = [
   "TEMPORARY",
 ];
 
-const categoryTypes = [
-  "SOFTWARE_DEVELOPMENT",
-  "DATA_SCIENCE_AI",
-  "NETWORKING_CYBERSECURITY",
-  "ACCOUNTING_FINANCE",
-  "SALES_MARKETING",
-  "HEALTHCARE_MEDICAL",
-  "TEACHING_EDUCATION",
-  "MECHANICAL_ENGINEERING",
-  "CUSTOMER_SUPPORT",
-  "GRAPHIC_DESIGN_MULTIMEDIA",
-  "HUMAN_RESOURCES",
-  "TRANSPORT_LOGISTICS",
-];
-
 const EmployerJobsList = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
+
   const [formData, setFormData] = useState({
     title: "",
-    category: "",
+    categoryId: "",
     description: "",
     applicationDeadline: "",
     requirement: "",
@@ -52,6 +39,23 @@ const EmployerJobsList = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/employers/category",
+          { withCredentials: true }
+        );
+
+        setCategories(response.data);
+      } catch (err) {
+        setError("Failed to load categories");
+        toast.error("Failed to load categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -118,16 +122,16 @@ const EmployerJobsList = () => {
         <div className="relative mb-4">
           <FaList className="absolute left-3 top-3 text-gray-500" />
           <select
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleInputChange}
             className="pl-10 w-full border p-2 rounded"
             required
           >
-            <option value="">Select Category</option>
-            {categoryTypes.map((category, index) => (
-              <option key={index} value={category}>
-                {category.replace("_", " ")} {/* Display user-friendly text */}
+            <option value="">Select a Category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Building, Lock, Mail, Phone } from "lucide-react";
+import { Building, Lock, Mail, Phone, Unlock } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { NavLink } from "react-router-dom";
@@ -43,7 +43,8 @@ export default function EmployerRegisterForm() {
     phonrNumber: "",
     password: "",
   });
-
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const handleBlur = (e) => {
     setErrors({ ...errors, [e.target.name]: "" });
   };
@@ -59,6 +60,8 @@ export default function EmployerRegisterForm() {
     if (Object.keys(validationErrors).length > 0) {
       return;
     }
+    setLoading(true); // <-- ADD THIS LINE
+
     try {
       const response = await axios.post(
         "http://localhost:5000/api/users/employer/register",
@@ -202,7 +205,7 @@ export default function EmployerRegisterForm() {
               <div className="relative flex items-center">
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-2.5 rounded-md outline-blue-500"
                   placeholder="Enter password"
@@ -214,7 +217,17 @@ export default function EmployerRegisterForm() {
                 {errors.password && (
                   <span className="error">{errors.password}</span>
                 )}
-                <Lock className="w-4 h-4 absolute right-4 cursor-pointer text-customSil" />
+                {showPassword ? (
+                  <Unlock
+                    className="w-4 h-4 absolute right-4 cursor-pointer text-customSil"
+                    onClick={() => setShowPassword(false)}
+                  />
+                ) : (
+                  <Lock
+                    className="w-4 h-4 absolute right-4 cursor-pointer text-customSil"
+                    onClick={() => setShowPassword(true)}
+                  />
+                )}{" "}
               </div>
             </div>
           </div>
@@ -222,9 +235,14 @@ export default function EmployerRegisterForm() {
           <div className="!mt-10">
             <button
               type="submit"
-              className="w-full py-3 px-4 tracking-wider text-sm rounded-md text-white bg-gray-700 hover:bg-gray-800 focus:outline-none"
+              disabled={loading}
+              className={`w-full py-3 px-4 tracking-wider text-sm rounded-md text-white ${
+                loading
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-gray-700 hover:bg-gray-800"
+              } focus:outline-none`}
             >
-              Create an account
+              {loading ? "Creating..." : "Create an account"}
             </button>
           </div>
           <p className="text-gray-800 text-sm mt-6 text-center">

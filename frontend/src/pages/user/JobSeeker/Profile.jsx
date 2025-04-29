@@ -62,7 +62,7 @@ export default function Profile() {
       dob,
       gender,
       address,
-      profileImage,
+      imageUrl,
       expectedSalary,
       jobType,
       preferredJobLocation,
@@ -78,21 +78,18 @@ export default function Profile() {
       {/* Header Section */}
       <header className="flex items-center gap-10 pb-8 mb-8 border-b border-gray-300">
         {/* Profile Image */}
-        <div>
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt={`${name}'s Profile`}
-              className="w-40 h-40 object-cover rounded-full border border-gray-300"
-            />
-          ) : (
-            <div className="w-40 h-40 flex items-center justify-center bg-gray-300 rounded-full">
-              <FaImage size={50} className="text-gray-600" />
-            </div>
-          )}
-        </div>
+        {imageUrl ? (
+          <img
+            src={`http://localhost:5000${imageUrl}`}
+            alt={name}
+            className="w-40 h-40 object-cover rounded-full border border-gray-300"
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center text-sm text-gray-600">
+            No Image
+          </div>
+        )}
 
-        {/* Personal Information */}
         <div>
           <h1 className="text-4xl font-bold text-gray-800">{name}</h1>
           <p className="text-lg text-gray-600 mt-1">

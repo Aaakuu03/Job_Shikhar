@@ -6,19 +6,23 @@ import { FaHeart } from "react-icons/fa";
 
 const JobByCategory = () => {
   const { category } = useParams(); // Get category from URL
+
   const [jobCategory, setJobCategory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState([]); // ✅ Store applied job IDs
+  const [wishlist, setWishlist] = useState([]);
 
   const [applicationError, setApplicationError] = useState(null); // State to handle application errors
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchJobs = async () => {
+      console.log("Fetching jobs for category:", category); // Log the category for debugging
+
       try {
         const response = await axios.get(
-          `/api/jobseekers/jobs/category/${category.toUpperCase()}`
+          `/api/jobseekers/jobs/category/${category}`
         ); // Fetch jobs based on the category
         setJobCategory(response.data);
       } catch (err) {
@@ -36,38 +40,85 @@ const JobByCategory = () => {
       const response = await axios.post(
         `/api/jobseekers/job-application/apply`,
         { jobId },
-        {
-          withCredentials: true, // ✅ Ensures cookies (JWT) are automatically sent
-        }
+        { withCredentials: true }
       );
+
       if (response.status === 201) {
-        toast.success("Application submitted successfully!"); // Success toast
-        setAppliedJobs((prev) => [...prev, jobId]); // ✅ Update applied jobs list
+        toast.success("Application submitted successfully!");
+        setAppliedJobs((prev) => [...prev, jobId]);
       }
     } catch (err) {
-      console.error("API Error Response:", err.response); // 🔍 Log full error response
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        toast.error("Unauthorized - Please log in to apply for this job.");
+        navigate("/jobseeker/login"); // Optional: redirect to login page
+        return;
+      }
+      const errorMessage =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "An error occurred while applying.";
 
-      if (err.response && err.response.data) {
-        const errorMessage =
-          err.response.data.error ||
-          err.response.data.message ||
-          "An error occurred while applying.";
+      toast.error(errorMessage);
 
-        // Handle other error cases
-        toast.error(errorMessage);
-      } else {
-        toast.error("An error occurred while applying.");
+      if (errorMessage.toLowerCase().includes("already applied")) {
+        setAppliedJobs((prev) => [...prev, jobId]);
+        return;
+      }
+
+      if (errorMessage.includes("Update profile")) {
+        navigate("/jobseeker/profile");
+      } else if (errorMessage.includes("Update education")) {
+        navigate("/jobseeker/education/info");
+      } else if (errorMessage.includes("Update training")) {
+        navigate("/jobseeker/training/info");
+      } else if (errorMessage.includes("Update work experience")) {
+        navigate("/jobseeker/work-experience/info");
       }
     }
   };
 
-  if (loading)
+  const handleWishlistToggle = async (jobId) => {
+    const alreadyWishlisted = wishlist.includes(jobId);
+
+    if (alreadyWishlisted) {
+      toast.error("Job is already in wishlist!"); // 🔴 Red colored toast
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `/api/whishlist/add`, // ✅ Corrected the typo here
+        { jobId },
+        { withCredentials: true }
+      );
+
+      if (response.status === 201) {
+        toast.success("Job added to wishlist!"); // ✅ Green toast
+        setWishlist((prev) => [...prev, jobId]);
+      }
+    } catch (err) {
+      const errorMessage =
+        err?.response?.data?.message || "Failed to add job to wishlist";
+
+      toast.error(errorMessage); // 🔴 Red toast for error
+
+      if (errorMessage.toLowerCase().includes("not logged in")) {
+        navigate("/jobseeker/login");
+      }
+    }
+  };
+
+  if (loading) {
     return (
-      <p className="text-center text-lg font-semibold text-gray-300">
-        Loading...
+      <p className="text-center text-lg font-medium text-gray-400">
+        Loading jobs...
       </p>
     );
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  }
+
+  if (error) {
+    return <p className="text-center text-red-500">{error}</p>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -80,80 +131,106 @@ const JobByCategory = () => {
           No jobs available in this category at the moment.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobCategory.map((job) => (
-            <div
-              key={job.id}
-              className="bg-[#f2f0ef] text-[#2b2b2b] p-6 rounded-xl shadow-md border border-[#baa898] relative"
-            >
-              <button className="absolute top-4 right-4 text-[#b3b3b3] hover:text-red-500">
-                <FaHeart />
-              </button>
-
-              {/* Logo */}
-              {job.logo && (
-                <div className="mb-4">
-                  <img
-                    src={job.logo}
-                    alt={job.company}
-                    className="w-12 h-12 rounded-md border border-[#baa898]"
+        <div className="max-w-7xl mx-auto px-4 py-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {jobCategory.map((job) => (
+              <div
+                key={job.id}
+                className="relative bg-white border border-[#D4D4D4] rounded-2xl p-6 flex flex-col gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              >
+                {/* Wishlist Icon */}
+                <button
+                  className="absolute top-4 right-4"
+                  onClick={() => handleWishlistToggle(job.id)}
+                >
+                  <FaHeart
+                    className={
+                      wishlist.includes(job.id)
+                        ? "text-red-500"
+                        : "text-gray-400"
+                    }
                   />
+                </button>
+
+                {/* Logo + Info */}
+                <div className="flex items-center gap-4">
+                  {job.employer?.imageUrl ? (
+                    <img
+                      src={`http://localhost:5000${job.employer?.imageUrl}`}
+                      alt={job.employer?.name}
+                      className="w-14 h-14 rounded-full object-cover border border-[#BAA898]"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center text-sm text-gray-600">
+                      No Image
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-lg font-semibold text-neutral-800">
+                      {job.title}
+                    </h2>
+                    <p className="text-sm text-[#888]">
+                      {job.employer?.user?.name}
+                    </p>
+                  </div>
                 </div>
-              )}
 
-              {/* Job Title & Company */}
-              <h2 className="text-xl font-semibold">{job.title}</h2>
-              <p className="text-gray-600 text-sm">{job.company}</p>
+                {/* Job Details */}
+                <div className="grid grid-cols-2 gap-3 text-sm text-neutral-600">
+                  <p className="flex items-center gap-1">
+                    🏢 {job.employer?.user?.name}
+                  </p>
+                  <p className="flex items-center gap-1">
+                    📍 {job.jobLocation || "N/A"}
+                  </p>
+                  <p className="flex items-center gap-1">
+                    💼 {job.employer?.industryType || "N/A"}
+                  </p>
+                  <p className="flex items-center gap-1">
+                    💰 {job.salary || "N/A"}
+                  </p>
+                </div>
 
-              {/* Salary & Experience */}
-              <div className="flex items-center gap-2 my-3">
-                {job.salary && (
-                  <span className="bg-[#2b2b2b] text-[#f2f0ef] text-xs px-2 py-1 rounded">
-                    {job.salary}
-                  </span>
-                )}
-                {job.experience && (
-                  <span className="bg-[#baa898] text-white text-xs px-2 py-1 rounded">
-                    {job.experience}
-                  </span>
-                )}
-                {job.type && (
-                  <span className="text-[#2b2b2b] text-xs">{job.type}</span>
-                )}
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {job.tags?.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#BAA898] text-white text-xs px-3 py-1 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Timestamp */}
+                <p className="text-xs text-[#999] mt-1">
+                  Posted: {new Date(job.createdAt).toLocaleDateString("en-CA")}
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 mt-4">
+                  <button
+                    className="text-sm font-medium text-white bg-[#7B9ACC] hover:bg-[#6786bb] px-4 py-2 rounded-lg"
+                    onClick={() => navigate(`/jobs/details/${job.id}`)}
+                  >
+                    View Details
+                  </button>
+                  <button
+                    className={`text-sm font-medium px-4 py-2 rounded-lg ${
+                      appliedJobs.includes(job.id)
+                        ? "bg-gray-400 cursor-not-allowed opacity-60 text-white"
+                        : "bg-[#4CAF50] hover:bg-[#449e48] text-white"
+                    }`}
+                    disabled={appliedJobs.includes(job.id)}
+                    onClick={() => handleApplyJob(job.id)}
+                  >
+                    {appliedJobs.includes(job.id) ? "Applied" : "Apply"}
+                  </button>
+                </div>
               </div>
-
-              {/* Description */}
-              <p className="text-gray-600 text-sm">
-                {job.description.length > 80
-                  ? job.description.slice(0, 80) + "..."
-                  : job.description}
-              </p>
-
-              {/* Posted Time */}
-              <p className="text-gray-500 text-xs mt-3">{job.postedTime}</p>
-
-              {/* Buttons */}
-              <div className="mt-4 flex gap-3">
-                <button
-                  className="bg-[#2b2b2b] hover:bg-[#baa898] text-white py-2 px-2 rounded w-1/2"
-                  onClick={() => navigate(`/jobs/details/${job.id}`)}
-                >
-                  View
-                </button>
-                <button
-                  className={`bg-[#b3b3b3] hover:bg-[#2b2b2b] text-white py-2 px-2 rounded w-1/2 ${
-                    appliedJobs.includes(job.id)
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                  disabled={appliedJobs.includes(job.id)}
-                  onClick={() => handleApplyJob(job.id)}
-                >
-                  {appliedJobs.includes(job.id) ? "Applied" : "Apply Now →"}
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

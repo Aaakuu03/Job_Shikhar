@@ -40,8 +40,8 @@ export default function PostedJobStats() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
   return (
-    <div className="flex m-3 justify-center items-center">
-      <div className="stats bg-base-100 border border-base-300">
+    <div className="flex p-5 justify-center items-center">
+      <div className="stats bg-[#F9FAFB] border border-base-300">
         <div className="stat">
           <div className="stat-figure text-primary">
             <FaCheckCircle className="text-green-500 text-lg" />

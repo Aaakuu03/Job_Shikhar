@@ -56,6 +56,18 @@ import JobSearchResults from "./pages/JobSearchResults";
 import JobByCategory from "./components/JobByCategory";
 import BlogDetail from "./pages/user/BlogDetail";
 import EditEmpProfile from "./components/Employer/EditEmpProfile";
+import JobList from "./pages/user/JobList";
+import JobByIndustry from "./components/JobByIndustry";
+import EmployerLogin from "./pages/user/Employer/EmployerLogin";
+import Login from "./pages/Login";
+import PricingComparision from "./components/Employer/PricingComparision";
+import Success from "./pages/user/Employer/Success";
+import Failure from "./pages/user/Employer/Failure";
+import PaymentForm from "./pages/user/Employer/PaymentForm";
+import ActivePackage from "./components/Employer/ActivePackage";
+import AllJobListingPage from "./pages/user/AllJobListingPage";
+import JobseekerList from "./pages/user/JobSeeker/JobseekerList";
+import JobseekerLandingPage from "./pages/user/JobSeeker/JobseekerLandingPage";
 
 export default function App() {
   return (
@@ -66,27 +78,41 @@ export default function App() {
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
           <Route path="/account/register" element={<Register />} />
+          <Route path="/account/login" element={<Login />} />
+
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/faqs" element={<Faq />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/jobseeker/login" element={<JobseekerLogin />} />
+          <Route path="/price" element={<PricingComparision />} />
+          <Route path="/all" element={<AllJobListingPage />} />
           <Route path="/job/:id" element={<JobDetail />} />
           <Route
             path="/jobs/category/:category" // Dynamic category route
             element={<JobByCategory />} // Renders the JobByCategory component
           />
           <Route
+            path="/jobs/industry/:industry" // Dynamic category route
+            element={<JobByIndustry />} // Renders the JobByCategory component
+          />
+          <Route
             path="/jobseeker/register"
             element={<JobseekerRegisterForm />}
           />
+
+          <Route path="/employer/login" element={<EmployerLogin />} />
           <Route path="/jobs/details/:jobId" element={<JobDetails />} />
           <Route path="/jobs/search" element={<JobSearchResults />} />
+          <Route path="/filtered-jobs" element={<JobList />} />
 
           <Route path="/price" element={<Price />} />
           <Route path="/employer/register" element={<EmployerRegisterForm />} />
-          <Route path="/verify-email/:token" element={<EmailVerifyPage />} />
+          <Route
+            path="/verify-email/:userType/:token"
+            element={<EmailVerifyPage />}
+          />
           <Route
             path="/reset-password/:token"
             element={<ResetPasswordPage />}
@@ -95,11 +121,30 @@ export default function App() {
         </Route>
 
         <Route path="/jobseeker" element={<JobSeekerLayout />}>
-          <Route path="/jobseeker/home" element={<Home />} />
+          <Route path="/jobseeker/home" element={<JobseekerLandingPage />} />
+          <Route path="/jobseeker/all" element={<JobseekerList />} />
+
           <Route path="/jobseeker/dashboard" element={<JobSeekerHome />} />
           <Route path="/jobseeker/blogs" element={<Blogs />} />
           <Route path="/jobseeker/faqs" element={<Faq />} />
           <Route path="/jobseeker/about" element={<AboutUs />} />
+
+          <Route
+            path="/jobseeker/jobs/category/:category" // Dynamic category route
+            element={<JobByCategory />} // Renders the JobByCategory component
+          />
+          <Route
+            path="/jobseeker/jobs/industry/:industry" // Dynamic category route
+            element={<JobByIndustry />} // Renders the JobByCategory component
+          />
+          <Route
+            path="/jobseeker/jobs/details/:jobId"
+            element={<JobDetails />}
+          />
+          <Route path="/jobseeker/filtered-jobs" element={<JobList />} />
+
+          <Route path="/jobseeker/jobs/search" element={<JobSearchResults />} />
+          <Route path="/jobseeker/filtered-jobs" element={<JobList />} />
           <Route path="/jobseeker/notification" element={<Notifications />} />
 
           <Route path="/jobseeker/fill-form" element={<PreferredJob />} />
@@ -141,6 +186,10 @@ export default function App() {
             element={<WorkExperienceList />}
           />
           <Route
+            path="/jobseeker/jobs/industry/:industry" // Dynamic category route
+            element={<JobByIndustry />} // Renders the JobByCategory component
+          />
+          <Route
             path="/jobseeker/workexperience/edit/:id"
             element={<EditWork />}
           />
@@ -148,6 +197,9 @@ export default function App() {
         <Route path="/employer" element={<EmployerLayout />}>
           <Route index element={<Home />} />
           <Route path="/employer/dashboard" element={<EmployerHome />} />
+          <Route path="/employer/blogs" element={<Blogs />} />
+          <Route path="/employer/faq" element={<Faq />} />
+          <Route path="/employer/about" element={<AboutUs />} />
           <Route path="/employer/jobs" element={<EmployerJobs />} />
           <Route
             path="/employer/edit-job/:jobId"
@@ -168,11 +220,15 @@ export default function App() {
           />
 
           <Route path="/employer/form" element={<EmpProfile />} />
+          <Route path="/employer/price" element={<PricingComparision />} />
+          <Route path="/employer/active" element={<ActivePackage />} />
+
           <Route path="/employer/profile" element={<CompanyProfile />} />
           <Route path="/employer/jobpost" element={<JobPostForm />} />
-        </Route>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
+          <Route path="/employer/payment" element={<PaymentForm />} />
+
+          <Route path="/employer/payment/success" element={<Success />} />
+          <Route path="/employer/payment/failure" element={<Failure />} />
         </Route>
       </Routes>
     </>

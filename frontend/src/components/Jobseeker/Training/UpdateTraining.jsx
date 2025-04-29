@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -131,13 +131,19 @@ export default function UpdateTraining() {
             required
           />
         </div>
-
-        <button
-          type="submit"
-          className="mt-8 px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white mx-auto block rounded-lg shadow-2xl"
-        >
-          Update
-        </button>
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <button
+            type="submit"
+            className="mt-8 px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white mx-auto block rounded-lg shadow-2xl"
+          >
+            Update
+          </button>
+          <NavLink to="/jobseeker/training/info">
+            <button className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl">
+              Cancel
+            </button>
+          </NavLink>
+        </div>
       </form>
     </>
   );

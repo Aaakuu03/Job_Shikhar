@@ -1,7 +1,28 @@
 import { PrismaClient } from "@prisma/client";
 import { sendNotification } from "../middleware/sendNotification.js";
+import nodemailer from "nodemailer"; // Make sure to install this
 
 const prisma = new PrismaClient();
+
+// Setup Nodemailer
+const sendEmail = async (to, subject, text) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com", // Change based on your email provider
+    port: 587, // Use 465 for secure (SSL), 587 for STARTTLS
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER, // Your email address
+      pass: process.env.EMAIL_PASS, // Your app-specific password
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+  });
+};
 const getApplicantsForJob = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -198,7 +219,7 @@ const getApplication = async (req, res) => {
 
 const updateApplicationStatus = async (req, res) => {
   try {
-    const { jobId, applicationId } = req.params;
+    const { applicationId } = req.params;
     const { status } = req.body;
 
     // Allowed statuses
@@ -208,8 +229,17 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     const application = await prisma.application.findUnique({
-      where: { id: applicationId, jobId },
-      include: { jobSeeker: true }, // Fetch job seeker details
+      where: {
+        id: applicationId,
+      },
+      include: {
+        job: true,
+        jobSeeker: {
+          include: {
+            user: true, // 👈 Get name and email from user table
+          },
+        },
+      },
     });
 
     if (!application) {
@@ -222,20 +252,33 @@ const updateApplicationStatus = async (req, res) => {
       data: { status },
     });
 
-    // Send notification if accepted
+    const { job, jobSeeker } = application;
+    const { user } = jobSeeker;
+
     if (status === "Accepted") {
       await sendNotification(
-        application.jobSeeker.id,
-        `Congratulations! Your application for Job ID ${jobId} has been accepted.`
+        jobSeeker.id,
+        `🎉 Congratulations! Your application for the position of "${job.title}" has been accepted. The company will contact you via email or SMS for further details.`
+      );
+
+      await sendEmail(
+        user.email,
+        `Interview Opportunity for ${job.title}`,
+        `Hello ${user.name},\n\nCongratulations! You have been shortlisted for the position of "${job.title}". The company will contact you soon via email or SMS with interview details.\n\nBest of luck!\n\n— Job Shikhar Team`
+      );
+    } else if (status === "Rejected") {
+      await sendNotification(
+        jobSeeker.id,
+        `🙁 We regret to inform you that your application for "${job.title}" was not selected. Keep applying for other opportunities!`
       );
     }
 
     res.json({
-      message: `Application status updated to ${status}!`,
+      message: `Application status updated to ${status}.`,
       application: updatedApplication,
     });
   } catch (error) {
-    console.error("Error updating application status:", error);
+    console.error("🔥 Error updating application status:", error);
     res.status(500).json({ error: "Internal server error." });
   }
 };
@@ -255,10 +298,35 @@ const statusNotification = async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 };
+// PUT /notifications/:id/read
+const readNotification = async (req, res) => {
+  const { id } = req.params;
+
+  const updatedNotification = await prisma.notification.update({
+    where: { id: id },
+    data: { read: true },
+  });
+
+  res.json(updatedNotification);
+};
+
+// PUT /notifications/mark-all-read/:userId
+const readAllNotification = async (req, res) => {
+  const { userId } = req.params;
+
+  await prisma.notification.updateMany({
+    where: { userId: userId, read: false },
+    data: { read: true },
+  });
+
+  res.json({ message: "All notifications marked as read" });
+};
 
 export {
   getApplicantsForJob,
   getApplication,
   updateApplicationStatus,
   statusNotification,
+  readAllNotification,
+  readNotification,
 };

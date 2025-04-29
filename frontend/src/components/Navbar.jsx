@@ -4,22 +4,32 @@ import { HiOfficeBuilding } from "react-icons/hi";
 import { FaSignInAlt, FaUserTie } from "react-icons/fa";
 import { MdLogin } from "react-icons/md";
 import { AiOutlineLogin, AiOutlineUserAdd } from "react-icons/ai";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
-const jobCategories = [
-  "SOFTWARE_DEVELOPMENT",
-  "DATA_SCIENCE_AI",
-  "NETWORKING_CYBERSECURITY",
-  "ACCOUNTING_FINANCE",
-  "SALES_MARKETING",
-  "HEALTHCARE_MEDICAL",
-  "TEACHING_EDUCATION",
-  "MECHANICAL_ENGINEERING",
-  "CUSTOMER_SUPPORT",
-  "GRAPHIC_DESIGN_MULTIMEDIA",
-  "HUMAN_RESOURCES",
-  "TRANSPORT_LOGISTICS",
-];
 export default function Navbar() {
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState({});
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/employers/category",
+          { withCredentials: true }
+        );
+        console.log("Categories fetched:", response.data); // Log the response
+        setCategories(response.data);
+      } catch (err) {
+        console.error("Error loading categories:", err);
+        setError({ message: "Failed to load categories" });
+        toast.error("Failed to load categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
   return (
     <div className="navbar bg-base-100  cursor-pointer px-10 shadow-lg">
       <div className="navbar-start">
@@ -51,16 +61,13 @@ export default function Navbar() {
                 tabIndex={0}
                 className="dropdown-content menu bg-base-100 rounded-box shadow  p-4 grid grid-cols-4 gap-4 min-w-[800px]  origin-left absolute z-50"
               >
-                {jobCategories.map((category) => (
+                {categories.map((category) => (
                   <li key={category} className="px-3">
                     <Link
-                      to={`/jobs/category/${category.toUpperCase()}`}
+                      to={`/jobs/category/${category.name}`}
                       className="block text-sm font-semibold text-gray-700 hover:text-customSil transition whitespace-nowrap cursor-pointer"
                     >
-                      {category
-                        .replace(/_/g, " ")
-                        .toLowerCase()
-                        .replace(/\b\w/g, (char) => char.toUpperCase())}
+                      {category.name}
                     </Link>
                   </li>
                 ))}
@@ -86,7 +93,7 @@ export default function Navbar() {
         </ul>
       </div>
       <div className="navbar-end  ">
-        <NavLink to="/jobseeker/login">
+        <NavLink to="/account/login">
           <div
             role="button"
             className="btn m-1 text-xl font-black text-customGray capitalize hover:uppercase"

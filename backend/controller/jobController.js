@@ -117,10 +117,19 @@ const applyForJob = async (req, res) => {
 const getAllJobs = async (req, res) => {
   try {
     console.log("Fetching jobs from the database...");
+
     const jobs = await prisma.job.findMany({
       distinct: ["id"], // Ensuring uniqueness
+      include: {
+        employer: {
+          include: {
+            user: true, // Fetch related user info (company name, logo, etc.)
+          },
+        },
+      },
     });
-    console.log("Jobs Fetched:", jobs.length); // Log the number of jobs retrieved
+
+    console.log("Jobs Fetched:", jobs.length);
     res.json(jobs);
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -138,6 +147,12 @@ const getJobDetailsById = async (req, res) => {
         employer: {
           include: {
             user: true, // Fetch user details from User table
+          },
+        },
+        category: {
+          // ✅ was jobCategory before, fixed now
+          select: {
+            name: true,
           },
         },
       },
@@ -177,7 +192,15 @@ const getAppliedJobDeatilsById = async (req, res) => {
     const appliedJobs = await prisma.application.findMany({
       where: { jobSeekerId: jobSeeker.id },
       include: {
-        job: true, // Include job details
+        job: {
+          include: {
+            employer: {
+              include: {
+                user: true, // includes user info from employer.userId FK
+              },
+            },
+          },
+        },
       },
     });
 
@@ -202,6 +225,7 @@ const getAppliedJobCount = async (req, res) => {
       },
       include: {
         application: true, // Include applications to count them
+        wishlist: true,
       },
     });
 
@@ -213,6 +237,9 @@ const getAppliedJobCount = async (req, res) => {
     const appliedJobsCount = jobSeeker.application
       ? jobSeeker.application.length
       : 0;
+
+    // Count the number of applications (i.e., the applied jobs)
+    const savedJobsCount = jobSeeker.wishlist ? jobSeeker.wishlist.length : 0;
 
     // Get number of pending applications
     const pendingApplicationsCount = await prisma.application.count({
@@ -227,6 +254,7 @@ const getAppliedJobCount = async (req, res) => {
     return res.status(200).json({
       appliedJobsCount,
       pendingApplicationsCount,
+      savedJobsCount,
     });
   } catch (error) {
     console.error("Error fetching applied job count:", error);
@@ -301,14 +329,33 @@ const getJobsByCategory = async (req, res) => {
     if (!category) {
       return res.status(400).json({ error: "Category is required" });
     }
-    // Sanitize category value (remove unwanted characters)
-    const sanitizedCategory = category.replace(/[^a-zA-Z0-9_]/g, "");
 
-    // Convert category to uppercase (to match ENUM format)
-    const formattedCategory = sanitizedCategory.toUpperCase();
-    // Fetch jobs where jobCategory matches (case-sensitive match)
+    // Sanitize category value (allow spaces, hyphens, and alphanumeric characters)
+    const sanitizedCategory = category.replace(/[^a-zA-Z0-9_\- ]/g, "");
+
+    // Fetch the category from the JobCategory table using the category name
+    const categoryRecord = await prisma.jobCategory.findUnique({
+      where: { name: sanitizedCategory }, // Ensure this matches your DB column name
+    });
+
+    // Check if the category exists
+    if (!categoryRecord) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    // Fetch jobs associated with this categoryId
     const jobs = await prisma.job.findMany({
-      where: { category: formattedCategory }, // ENUM stored as a string
+      where: {
+        categoryId: categoryRecord.id, // Use categoryId to fetch jobs
+      },
+      include: {
+        employer: {
+          include: {
+            user: true, // Include the user details linked to employer
+          },
+        },
+        jobSeeker: true, // Include job seeker details (if needed)
+      },
     });
 
     // Return an empty array with a 200 status if no jobs are found
@@ -323,6 +370,124 @@ const getJobsByCategory = async (req, res) => {
   }
 };
 
+const getJobsByIndustry = async (req, res) => {
+  try {
+    const { industry } = req.params;
+
+    if (!industry) {
+      return res.status(400).json({ error: "Industry type is required" });
+    }
+
+    // Sanitize and format the industryType input
+    const sanitizedIndustry = industry.replace(/[^a-zA-Z0-9_]/g, "");
+    const formattedIndustry = sanitizedIndustry.toUpperCase(); // Assuming your ENUMs are uppercase
+    // Count the number of jobs in the specified industry
+    const jobCount = await prisma.job.count({
+      where: {
+        employer: {
+          industryType: formattedIndustry,
+        },
+      },
+    });
+
+    if (jobCount === 0) {
+      return res.status(200).json([]); // Always return an array
+    }
+
+    const jobs = await prisma.job.findMany({
+      where: {
+        employer: {
+          industryType: formattedIndustry,
+        },
+      },
+      include: {
+        employer: {
+          include: {
+            user: true, // Include the user details linked to employer
+          },
+        },
+      },
+    });
+    // if (jobs.length === 0) {
+    //   return res.status(200).json([]); // Return empty array, not 404
+    // }
+
+    res.json(jobs);
+  } catch (error) {
+    console.error("❌ Error fetching jobs by industry type:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getAllJobListing = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; // default 10 jobs per page
+    const skip = (page - 1) * limit;
+
+    // Get employmentType from the query and normalize it to uppercase
+    const employmentType = req.query.employmentType
+      ? req.query.employmentType.toUpperCase() // Normalize to uppercase
+      : "ALL";
+
+    // List of valid EmploymentType enum values
+    const validEmploymentTypes = [
+      "FULL_TIME",
+      "PART_TIME",
+      "CONTRACT",
+      "INTERNSHIP",
+      "FREELANCE",
+      "TEMPORARY",
+    ];
+
+    // Check if the provided employmentType is valid
+    if (
+      employmentType !== "ALL" &&
+      !validEmploymentTypes.includes(employmentType)
+    ) {
+      return res.status(400).json({ message: "Invalid employment type." });
+    }
+
+    // Build the filter object
+    const filter = employmentType !== "ALL" ? { jobType: employmentType } : {};
+
+    // Fetch jobs with employment type filter if it's not "ALL"
+    const [jobs, totalJobs] = await Promise.all([
+      prisma.job.findMany({
+        where: filter, // Apply the filter to the query
+        skip: skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        distinct: ["id"], // Ensure uniqueness
+        include: {
+          employer: {
+            include: {
+              user: true, // Fetch related user info (company name, logo, etc.)
+            },
+          },
+        },
+      }),
+      prisma.job.count({
+        where: filter, // Apply the filter to count query
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalJobs / limit);
+
+    res.status(200).json({
+      jobs,
+      totalJobs,
+      totalPages,
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch jobs", error: error.message });
+  }
+};
+
 export {
   applyForJob,
   getAllJobs,
@@ -331,4 +496,5 @@ export {
   getAppliedJobCount,
   getPostedJobStats,
   getJobsByCategory,
+  getJobsByIndustry,
 };

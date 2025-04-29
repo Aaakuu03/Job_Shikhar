@@ -1,9 +1,11 @@
+import Working from "./Working";
+
 export default function AboutUs() {
   return (
     <>
       <div class="grid md:grid-cols-3 gap-6 min-h-[164px] py-8 p-16 bg-gradient-to-r from-[#B3B3B3] to-[#2B2B2B] font-sans overflow-hidden">
         <div class="md:col-span-2">
-          <h1 class="text-3xl font-bold text-white">Anout JobShikhar!</h1>
+          <h1 class="text-3xl font-bold text-white">About JobShikhar!</h1>
           <p class="text-base text-gray-200 mt-4">
             "Job Shikhar is an online job portal connecting job seekers with
             employers."
@@ -25,8 +27,11 @@ export default function AboutUs() {
           />
         </div>
       </div>
+      <div>
+        <Working />
+      </div>
       {/* features */}
-      <div class="max-w-7xl max-md:max-w-xl  mt-5 font-[sans-serif]">
+      <div class="max-w-7xl max-md:max-w-xl  mt-5 font-[sans-serif] mb-2">
         <div class="grid xl:grid-cols-3 md:grid-cols-2 gap-12 items-center">
           <div>
             <img

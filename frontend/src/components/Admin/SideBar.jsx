@@ -1,77 +1,71 @@
-import { useState } from "react";
 import { BiCategory } from "react-icons/bi";
 import { FaDollarSign, FaUsers } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import { MdDashboard, MdWork } from "react-icons/md";
 import { IoIosArrowBack } from "react-icons/io";
-import logo2 from "@/assets/logo2.png";
 import { NavLink } from "react-router-dom";
+import logo2 from "@/assets/logo2.png";
 
-export default function SideBar() {
-  const [collapsed, setCollapsed] = useState(false);
+export default function SideBar({ isMobile, collapsed, setCollapsed }) {
+  const menuItems = [
+    { icon: MdDashboard, label: "Dashboard", to: "/admin" },
+    { icon: FaUsers, label: "Manage Users", to: "/admin/users" },
+    { icon: MdWork, label: "Manage Jobs", to: "/admin/jobs" },
+    { icon: BiCategory, label: "Category", to: "/admin/categories" },
+    { icon: FaDollarSign, label: "Products", to: "/admin/products" },
+  ];
 
   return (
     <nav
-      className={`bg-[#B3B3B3] shadow-lg h-screen fixed top-0 left-0 py-6 px-6 font-[sans-serif] flex flex-col overflow-auto transition-all duration-300 ${
-        collapsed ? "w-20" : "min-w-[220px]"
+      className={`bg-[#B3B3B3] text-white shadow-xl transition-all duration-300 h-screen overflow-y-auto flex flex-col ${
+        collapsed ? "w-[80px]" : "w-[220px]"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-2">
+          <img src={logo2} alt="Logo" className="h-10 w-auto" />
           {!collapsed && (
-            <img
-              src={logo2}
-              alt="Logo"
-              className="h-20 w-auto transition-all duration-300"
-            />
-          )}
-          {!collapsed && (
-            <div className="text-xl font-bold group">
-              <NavLink to="/admin">
-                <span className="text-customGray group-hover:text-[#D4D4D4]">
-                  Job
-                </span>
-                <span className="text-[#D4D4D4] group-hover:text-customGray">
-                  Shikhar
-                </span>
-              </NavLink>
-            </div>
+            <span className="text-xl font-bold">
+              Job<span className="text-blue-300">Shikhar</span>
+            </span>
           )}
         </div>
         <IoIosArrowBack
           size={24}
-          className={`cursor-pointer text-white transition-transform duration-300 hover:scale-110 ${
-            collapsed ? "rotate-180" : ""
+          className={`cursor-pointer transition-transform duration-300 hover:scale-110 ${
+            collapsed ? "rotate-180 ml-auto" : ""
           }`}
           onClick={() => setCollapsed(!collapsed)}
         />
       </div>
 
-      <ul className="space-y-8 pl-3 flex-1 mt-10 text-white">
-        {[
-          { icon: MdDashboard, label: "Dashboard" },
-          { icon: FaUsers, label: "Manage Users" },
-          { icon: MdWork, label: "Manage Jobs" },
-          { icon: BiCategory, label: "Category" },
-          { icon: FaDollarSign, label: "Products" },
-        ].map((item, index) => (
+      {/* Menu */}
+      <ul className="flex-1 space-y-4 px-3 mt-6">
+        {menuItems.map(({ icon: Icon, label, to }, index) => (
           <li key={index}>
-            <button className="text-white font-semibold text-sm flex items-center rounded-md left-0 hover:left-1 relative transition-all cursor-pointer bg-transparent border-none">
-              <item.icon size={18} className="mr-4" />
-              {!collapsed && <span>{item.label}</span>}
-            </button>
+            <NavLink
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 p-2 rounded-md text-sm font-medium transition-all duration-200 hover:bg-blue-500/20 hover:text-blue-300 ${
+                  isActive ? "bg-blue-500/30 text-blue-200" : "text-white"
+                }`
+              }
+            >
+              <Icon size={20} />
+              {!collapsed && <span>{label}</span>}
+            </NavLink>
           </li>
         ))}
       </ul>
 
-      <ul className="space-y-8 pl-3 mt-8">
-        <li>
-          <button className="text-white font-semibold text-sm flex items-center rounded-md left-0 hover:left-1 relative transition-all cursor-pointer bg-transparent border-none">
-            <FiLogOut size={18} className="mr-4" />
-            {!collapsed && <span>Logout</span>}
-          </button>
-        </li>
-      </ul>
+      {/* Footer */}
+      <div className="px-4 pb-6">
+        <button className="flex items-center gap-3 text-sm font-medium text-white hover:text-red-400 transition">
+          <FiLogOut size={20} />
+          {!collapsed && <span>Logout</span>}
+        </button>
+      </div>
     </nav>
   );
 }

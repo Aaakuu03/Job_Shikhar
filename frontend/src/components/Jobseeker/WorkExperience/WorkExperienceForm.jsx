@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 export default function WorkExperienceForm() {
   const currentYear = new Date().getFullYear();
   const years = Array.from(
@@ -157,9 +157,11 @@ export default function WorkExperienceForm() {
             Add
           </button>
 
-          <button className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl">
-            Cancel
-          </button>
+          <NavLink to="/jobseeker/workexperience/info">
+            <button className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl">
+              Cancel
+            </button>
+          </NavLink>
         </div>
       </form>
     </>

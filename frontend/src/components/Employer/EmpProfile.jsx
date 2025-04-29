@@ -5,7 +5,7 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-// import Cookies from "js-cookie"; // Import js-cookie to handle cookies easily
+
 export default function EmpProfile() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ export default function EmpProfile() {
     contactName: "",
     phone: "",
     aboutCompany: "",
+    imageUrl: "", // Image state to handle the file upload
   });
 
   // Define the Industry Types enum (this should match your Prisma enum)
@@ -30,6 +31,13 @@ export default function EmpProfile() {
     "CONSTRUCTION_ENGINEERING",
   ];
 
+  const handleImageChange = (e) => {
+    setFormData({
+      ...formData,
+      imageUrl: e.target.files[0], // Store file object for image
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -38,44 +46,76 @@ export default function EmpProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // FormData to handle image and text data together
+    const formDataToSend = new FormData();
+    formDataToSend.append("industryType", formData.industryType);
+    formDataToSend.append("address", formData.address);
+    formDataToSend.append("companySize", formData.companySize);
+    formDataToSend.append("contactName", formData.contactName);
+    formDataToSend.append("phone", formData.phone);
+    formDataToSend.append("aboutCompany", formData.aboutCompany);
+    if (formData.imageUrl) formDataToSend.append("image", formData.imageUrl);
+
     try {
       const response = await axios.post(
         "http://localhost:3000/api/employers/profile/create",
-        formData,
+        formDataToSend,
         {
-          withCredentials: true, // ✅ Ensures cookies are sent
+          withCredentials: true, // Ensures cookies are sent
+          headers: {
+            "Content-Type": "multipart/form-data", // This is necessary for file upload
+          },
         }
       );
 
-      // ✅ Check if the request was successful
+      // Handle response
       if (response.status === 201) {
         toast.success("Profile submitted successfully!");
 
-        // // ✅ Update user data in localStorage (isFormFilled: true)
-        // const storedUser = Cookies.get("user"); // Get user data as a string
-        // storedUser.isFormFilled = true;
-        // storedUser ? JSON.parse(storedUser).id : null; // Parse JSON if it exists
-        // ✅ Redirect to dashboard
+        // Reset form fields after successful submission
+        setFormData({
+          industryType: "",
+          address: "",
+          companySize: "",
+          contactName: "",
+          phone: "",
+          aboutCompany: "",
+          imageUrl: "",
+        });
+
+        // Redirect to dashboard
         navigate("/employer/dashboard");
       } else {
         throw new Error("Unexpected response from server.");
       }
     } catch (error) {
       console.error("Error submitting profile:", error);
-
-      // ✅ Handle different error cases
       const errorMessage =
         error.response?.data?.error ||
         "Failed to submit profile. Please try again.";
       toast.error(errorMessage);
     }
   };
+
   return (
     <div className="max-w-3xl bg-[#F2F0EF] mx-auto my-8 p-10 border-2 border-gray-400 rounded-3xl shadow-lg">
       <h1 className="mb-6 text-xl text-[#2B2B2B] font-medium text-center">
         Please Fill your further information
       </h1>
       <form onSubmit={handleSubmit}>
+        {/* Image Upload */}
+        <div className="relative mb-6">
+          <label className="block text-sm font-medium text-gray-700">
+            Image
+          </label>
+          <input
+            type="file"
+            onChange={handleImageChange} // Store the selected file
+            accept="image/*" // Restrict to image files only
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+
         {/* Industry Type */}
         <div className="relative mb-6">
           <label className="flex items-center mb-2 text-gray-600 text-sm font-medium">
@@ -153,14 +193,14 @@ export default function EmpProfile() {
             </select>
           </div>
         </div>
+
+        {/* Contact Information */}
         <div className="relative mb-6">
           <label className="flex items-center mb-2 text-gray-600 text-lg font-medium">
             Provide Recruitment focal-person's contact detail
           </label>
         </div>
-        {/* Contact Info */}
         <div className="relative flex justify-center items-center gap-3 mb-6">
-          {/* Contact Name */}
           <div className="w-1/2">
             <label className="flex items-center mb-2 text-gray-600 text-sm font-medium">
               Contact Name <Asterisk className="text-red-500 w-4 h-4" />
@@ -182,7 +222,6 @@ export default function EmpProfile() {
             </div>
           </div>
 
-          {/* Phone Number */}
           <div className="w-1/2">
             <label className="flex items-center mb-2 text-gray-600 text-sm font-medium">
               Phone No <Asterisk className="text-red-500 w-4 h-4" />

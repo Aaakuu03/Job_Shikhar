@@ -3,9 +3,9 @@ import EmployerJobs from "./EmployerJobs";
 
 export default function EmployerHome() {
   return (
-    <>
+    <div>
       <PostedJobStats />
       <EmployerJobs />
-    </>
+    </div>
   );
 }

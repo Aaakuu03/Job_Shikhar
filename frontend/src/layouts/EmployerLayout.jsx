@@ -8,6 +8,7 @@ export default function EmployerLayout() {
       <div>
         <NavbarEmp />
       </div>
+
       <Outlet />
       <div>
         <Footer />

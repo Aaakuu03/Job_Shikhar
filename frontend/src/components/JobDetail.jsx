@@ -27,8 +27,9 @@ const JobDetail = () => {
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4">{job.title}</h2>
       <p>
-        <strong>Category:</strong> {job.category}
+        <strong>Category:</strong> {job.category?.name ?? "N/A"}
       </p>
+
       <p>
         <strong>Salary:</strong> ${job.salary}
       </p>
@@ -46,7 +47,7 @@ const JobDetail = () => {
         {new Date(job.applicationDeadline).toLocaleDateString()}
       </p>
       <p>
-        <strong>Type:</strong> {job.type} - {job.jobType}
+        <strong>Type:</strong> {job.jobType}
       </p>
     </div>
   );

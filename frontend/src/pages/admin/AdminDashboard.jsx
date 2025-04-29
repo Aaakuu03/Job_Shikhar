@@ -15,7 +15,6 @@ export default function AdminDashboard() {
           content 3
         </div>
       </div>
-      
     </div>
   );
 }

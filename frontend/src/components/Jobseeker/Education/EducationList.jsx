@@ -125,7 +125,7 @@ export default function EducationList() {
                     type="button"
                     className="py-3 px-6 text-sm font-semibold border-2 border-gray-800 rounded-md text-white bg-gray-800 hover:bg-white hover:text-gray-800 transition-colors"
                   >
-                    Add Training
+                    Add Education
                   </button>
                 </NavLink>
               </div>

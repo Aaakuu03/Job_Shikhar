@@ -22,12 +22,12 @@ export default function Hero() {
         <div className="hero-overlay bg-black bg-opacity-60 "></div>
         <div className="hero-content text-neutral-content text-center">
           <div className="max-w-md space-y-6">
-            <h1 className="text-5xl font-bold">Hello there</h1>
-            <p className="text-lg">
+            <h1 className="text-5xl font-bold animate-fadeInUp">Hello there</h1>
+            <p className="text-lg animate-fadeInUp [animation-delay:200ms]">
               "Your Personalized Job Search Companion – Helping You Land the
               Right Job, at the Right Time, with the Right Employer."
             </p>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md">
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-md animate-fadeInUp [animation-delay:400ms]">
               <input
                 type="text"
                 className="grow text-gray-700 outline-none"

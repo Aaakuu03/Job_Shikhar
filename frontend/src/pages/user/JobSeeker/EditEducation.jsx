@@ -17,7 +17,7 @@ export default function EditEducation() {
             Education Information - Edit
           </div>
           <section className=" p-1 bg-[#F2F0EF] ">
-            <div className="border mx-auto border-black max-w-4xl p-10 my-5">
+            <div className="border mx-auto shadow-gray-500 max-w-4xl p-10 my-5">
               <UpdateEducation />
             </div>
           </section>

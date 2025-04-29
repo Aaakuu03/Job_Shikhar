@@ -6,10 +6,8 @@ import Notification from "../../../components/Jobseeker/Notification";
 export default function JobSeekerHome() {
   return (
     <>
-      <FeaturedJob />
       <JobStats />
       <JobTab />
-      <Notification />
     </>
   );
 }

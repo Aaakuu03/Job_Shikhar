@@ -2,7 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { NavLink } from "react-router-dom";
-import { Lock, Mail, Phone } from "lucide-react";
+import { User, Lock, Mail, Phone, Unlock } from "lucide-react";
 export default function JobseekerRegisterForm() {
   const Validation = (userInput) => {
     let errors = {};
@@ -35,11 +35,13 @@ export default function JobseekerRegisterForm() {
 
     return errors;
   };
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [userInput, setUserInput] = useState({
     email: "",
     name: "",
-    phonrNumber: "",
+    phoneNumber: "",
     password: "",
   });
 
@@ -48,6 +50,7 @@ export default function JobseekerRegisterForm() {
   };
 
   const [errors, setErrors] = useState({});
+
   const handleSignup = async (e) => {
     e.preventDefault();
 
@@ -58,6 +61,8 @@ export default function JobseekerRegisterForm() {
     if (Object.keys(validationErrors).length > 0) {
       return;
     }
+    setLoading(true); // <-- ADD THIS LINE
+
     try {
       const response = await axios.post(
         "http://localhost:5000/api/users/jobseeker/register",
@@ -83,6 +88,8 @@ export default function JobseekerRegisterForm() {
       } else {
         toast.error("Registration failed. Please try again.");
       }
+    } finally {
+      setLoading(false); // Stop loading in all cases
     }
   };
 
@@ -143,29 +150,16 @@ export default function JobseekerRegisterForm() {
                   }
                   onBlur={handleBlur}
                 />
-                {errors.name && (
-                  <span className="text-danger">{errors.name}</span>
-                )}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="#bbb"
-                  stroke="#bbb"
-                  className="w-4 h-4 absolute right-4"
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="10" cy="7" r="6" data-original="#000000"></circle>
-                  <path
-                    d="M14 15H6a5 5 0 0 0-5 5 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 5 5 0 0 0-5-5zm8-4h-2.59l.3-.29a1 1 0 0 0-1.42-1.42l-2 2a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0 1 1 0 0 0 0-1.42l-.3-.29H22a1 1 0 0 0 0-2z"
-                    data-original="#000000"
-                  ></path>
-                </svg>
+
+                <User className="w-4 h-4 absolute right-4 cursor-pointer text-customSil" />
               </div>
+              {errors.name && (
+                <span className="text-danger">{errors.name}</span>
+              )}
             </div>
 
             <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Email Id
-              </label>
+              <label className="text-gray-800 text-sm mb-2 block">Email</label>
               <div className="relative flex items-center">
                 <input
                   name="email"
@@ -178,11 +172,14 @@ export default function JobseekerRegisterForm() {
                   }
                   onBlur={handleBlur}
                 />
-                {errors.email && (
-                  <span className="text-danger">{errors.email}</span>
-                )}
+
                 <Mail className="w-4 h-4 absolute right-4 cursor-pointer text-customSil" />
               </div>
+              {errors.email && (
+                <span className="text-red-600 text-sm mt-1 block">
+                  {errors.email}
+                </span>
+              )}
             </div>
 
             <div>
@@ -201,11 +198,14 @@ export default function JobseekerRegisterForm() {
                   }
                   onBlur={handleBlur}
                 />
-                {errors.phoneNumber && (
-                  <span className="error">{errors.phoneNumber}</span>
-                )}
+
                 <Phone className="w-4 h-4 absolute right-4 cursor-pointer text-customSil" />
               </div>
+              {errors.phoneNumber && (
+                <span className="text-red-600 text-sm mt-1 block">
+                  {errors.phoneNumber}
+                </span>
+              )}
             </div>
             <div>
               <label className="text-gray-800 text-sm mb-2 block">
@@ -214,7 +214,7 @@ export default function JobseekerRegisterForm() {
               <div className="relative flex items-center">
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-2.5 rounded-md outline-blue-500"
                   placeholder="Enter password"
@@ -223,20 +223,38 @@ export default function JobseekerRegisterForm() {
                   }
                   onBlur={handleBlur}
                 />
-                {errors.password && (
-                  <span className="error">{errors.password}</span>
+
+                {showPassword ? (
+                  <Unlock
+                    className="w-4 h-4 absolute right-4 cursor-pointer text-customSil"
+                    onClick={() => setShowPassword(false)}
+                  />
+                ) : (
+                  <Lock
+                    className="w-4 h-4 absolute right-4 cursor-pointer text-customSil"
+                    onClick={() => setShowPassword(true)}
+                  />
                 )}
-                <Lock className="w-4 h-4 absolute right-4 cursor-pointer text-customSil" />
               </div>
+              {errors.password && (
+                <span className="text-red-600 text-sm mt-1 block">
+                  {errors.password}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="!mt-10">
             <button
               type="submit"
-              className="w-full py-3 px-4 tracking-wider text-sm rounded-md text-white bg-gray-700 hover:bg-gray-800 focus:outline-none"
+              disabled={loading}
+              className={`w-full py-3 px-4 tracking-wider text-sm rounded-md text-white ${
+                loading
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-gray-700 hover:bg-gray-800"
+              } focus:outline-none`}
             >
-              Create an account
+              {loading ? "Creating..." : "Create an account"}
             </button>
           </div>
           <p className="text-gray-800 text-sm mt-6 text-center">

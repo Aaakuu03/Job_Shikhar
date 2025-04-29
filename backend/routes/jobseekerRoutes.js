@@ -12,6 +12,10 @@ import {
   searchJobs,
 } from "../controller/jobseekerController.js";
 import { verifyToken } from "../middleware/jwtVerify.js";
+import {
+  readAllNotification,
+  readNotification,
+} from "../controller/applicationController.js";
 const jobseekerRouter = express.Router();
 
 jobseekerRouter.get("/profile", verifyToken, getJobSeekerProfile);
@@ -24,5 +28,10 @@ jobseekerRouter.get("/info/:id", verifyToken, getBasicInformationById);
 jobseekerRouter.get("/profiledetails/:id", verifyToken, getJobSeekerDetails);
 jobseekerRouter.get("/notifications", verifyToken, getNotification);
 jobseekerRouter.get("/job/search", searchJobs);
-
+jobseekerRouter.put("/notifications/:id/read", verifyToken, readNotification);
+jobseekerRouter.put(
+  "/notifications/mark-all-read",
+  verifyToken,
+  readAllNotification
+);
 export default jobseekerRouter;

@@ -1,9 +1,12 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AppliedJob() {
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const navigate = useNavigate();
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -55,23 +58,20 @@ export default function AppliedJob() {
                     <div className="avatar">
                       <div className="mask mask-squircle h-12 w-12">
                         <img
-                          src={
-                            application.job?.companyLogo ||
-                            "https://via.placeholder.com/50"
-                          }
-                          alt={application.job?.title || "Job"}
+                          src={`http://localhost:5000${application.job?.employer?.imageUrl}`}
+                          alt="Company Logo"
                         />
                       </div>
                     </div>
                     <div>
                       <div className="font-bold">{application.job?.title}</div>
                       <div className="text-sm opacity-50">
-                        {application.job?.location || "N/A"}
+                        {application.job?.jobLocation || "N/A"}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td>{application.job?.companyName || "Unknown"}</td>
+                <td>{application.job?.employer?.user?.name || "Unknown"}</td>
                 <td>
                   {application.job?.applicationDeadline
                     ? new Date(
@@ -92,13 +92,51 @@ export default function AppliedJob() {
                   </span>
                 </td>
                 <td>
-                  <button className="btn btn-ghost btn-xs">Details</button>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() =>
+                      navigate(`/jobseeker/jobs/details/${application.job.id}`)
+                    }
+                  >
+                    Details
+                  </button>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </table>
+      {selectedApplication && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">
+              {selectedApplication.job?.title}
+            </h3>
+            <p className="py-2">
+              <strong>Company:</strong>{" "}
+              {selectedApplication.job?.employer?.user?.name}
+            </p>
+            <p className="py-1">
+              <strong>Location:</strong> {selectedApplication.job?.jobLocation}
+            </p>
+            <p className="py-1">
+              <strong>Description:</strong>{" "}
+              {selectedApplication.job?.description}
+            </p>
+            <p className="py-1">
+              <strong>Status:</strong> {selectedApplication.status}
+            </p>
+            <div className="modal-action">
+              <button
+                className="btn"
+                onClick={() => setSelectedApplication(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </div>
   );
 }

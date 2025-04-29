@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 export default function UpdateWorkExperience() {
   const { id } = useParams(); // Get the ID from the URL params
   const navigate = useNavigate(); // Navigate after successful update
@@ -188,9 +188,11 @@ export default function UpdateWorkExperience() {
             Add
           </button>
 
-          <button className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl">
-            Cancel
-          </button>
+          <NavLink to="/jobseeker/workexperience/info">
+            <button className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl">
+              Cancel
+            </button>
+          </NavLink>
         </div>
       </form>
     </>

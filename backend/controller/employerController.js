@@ -1,7 +1,26 @@
 import { PrismaClient } from "@prisma/client";
-
+import path from "path";
+import fs from "fs";
+import multer from "multer";
 const prisma = new PrismaClient();
+// Set up multer storage for handling image uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "./uploads";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir); // Ensure the 'uploads' folder exists
+    }
+    cb(null, dir); // Save files to the 'uploads' folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to the filename
+  },
+});
 
+const upload = multer({ storage }); // Configure multer with the storage settings
+
+// Middleware for handling file uploads
+const uploadImage = upload.single("image"); // Use 'image' field name for the file
 // Get Employer Profile
 const getEmployerProfile = async (req, res) => {
   console.log("req.userId:", req.userId); // Check if userId is present
@@ -24,81 +43,99 @@ const getEmployerProfile = async (req, res) => {
   }
 };
 
-// controllers/jobSeekerController.js
+// Create Employer Profile
 const createEmployerProfile = async (req, res) => {
-  try {
-    const {
-      industryType,
-      address,
-      companySize,
-      contactName,
-      phone,
-      aboutCompany,
-    } = req.body;
-
-    // Ensure required fields are provided (if applicable)
-    if (!req.userId) {
-      return res.status(400).json({ error: "User ID is missing from token." });
-    }
-
-    // Ensure the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.userId },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Check if the JobSeeker profile already exists
-    const existingProfile = await prisma.employer.findUnique({
-      where: { userId: req.userId },
-    });
-
-    if (existingProfile) {
+  uploadImage(req, res, async (err) => {
+    if (err) {
       return res
         .status(400)
-        .json({ error: "Employer profile already exists." });
+        .json({ message: "Image upload failed", error: err.message });
     }
 
-    // Create the JobSeeker profile
-    const newProfile = await prisma.employer.create({
-      data: {
-        userId: req.userId,
-        industryType: industryType,
-        address: address,
-        companySize: companySize,
-        contactName: contactName,
-        phone: phone,
-        aboutCompany: aboutCompany,
-      },
-      include: {
-        user: true,
-      },
-    });
+    // Debug: Log incoming request data
+    // console.log("Request Body:", req.body); // Uncomment for debugging purposes
+    // console.log("Uploaded File:", req.file); // Uncomment for debugging purposes
 
-    // Update `isFormFilled` to true after successful profile creation
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { isFormFilled: true },
-    });
+    try {
+      const {
+        industryType,
+        address,
+        companySize,
+        contactName,
+        phone,
+        aboutCompany,
+      } = req.body;
 
-    res.status(201).json({
-      message: "Employer profile created successfully.",
-      profile: newProfile,
-    });
-  } catch (error) {
-    console.error("Error creating employer profile:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      details: error.message,
-    });
-  }
+      // Ensure required fields are provided (if applicable)
+      if (!req.userId) {
+        return res
+          .status(400)
+          .json({ error: "User ID is missing from token." });
+      }
+
+      // Ensure the user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id: req.userId },
+      });
+
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      // Check if the Employer profile already exists
+      const existingProfile = await prisma.employer.findUnique({
+        where: { userId: req.userId },
+      });
+
+      if (existingProfile) {
+        return res
+          .status(400)
+          .json({ error: "Employer profile already exists." });
+      }
+
+      const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the image URL
+
+      // Create the Employer profile
+      const newProfile = await prisma.employer.create({
+        data: {
+          userId: req.userId,
+          industryType,
+          address,
+          companySize,
+          contactName,
+          phone,
+          aboutCompany,
+          imageUrl,
+        },
+        include: {
+          user: true, // Include user info in the response
+        },
+      });
+
+      // Update `isFormFilled` to true after successful profile creation
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { isFormFilled: true },
+      });
+
+      res.status(201).json({
+        message: "Employer profile created successfully.",
+        profile: newProfile,
+      });
+    } catch (error) {
+      console.error("Error creating employer profile:", error);
+      res.status(500).json({
+        error: "Internal Server Error",
+        details: error.message,
+      });
+    }
+  });
 };
 
 const updateEmployerProfile = async (req, res) => {
   try {
     const { id } = req.params; // Get ID from request params
+
     const {
       name,
       phoneNumber,
@@ -109,51 +146,64 @@ const updateEmployerProfile = async (req, res) => {
       phone,
       aboutCompany,
     } = req.body;
+    let imageUrl = null;
+    // Upload image and continue inside callback
+    uploadImage(req, res, async (err) => {
+      if (err) {
+        return res
+          .status(400)
+          .json({ message: "Image upload failed", error: err.message });
+      }
 
-    // Ensure the user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
+      if (req.file) {
+        imageUrl = `/uploads/${req.file.filename}`; // Save the new image URL
+      }
+      // Ensure the user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id },
+      });
 
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found." });
+      }
 
-    // Ensure the employer profile exists
-    const existingProfile = await prisma.employer.findUnique({
-      where: { userId: id },
-    });
+      // Ensure the employer profile exists
+      const existingProfile = await prisma.employer.findUnique({
+        where: { userId: id },
+      });
 
-    if (!existingProfile) {
-      return res.status(404).json({ error: "Employer profile not found." });
-    }
+      if (!existingProfile) {
+        return res.status(404).json({ error: "Employer profile not found." });
+      }
 
-    // Update User table
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(phoneNumber && { phoneNumber }),
-      },
-    });
+      // Update User table
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: {
+          ...(name && { name }),
+          ...(phoneNumber && { phoneNumber }),
+        },
+      });
 
-    // Update Employer table
-    const updatedEmployer = await prisma.employer.update({
-      where: { userId: id },
-      data: {
-        ...(address && { address }),
-        ...(industryType && { industryType }),
-        ...(companySize && { companySize }),
-        ...(contactName && { contactName }),
-        ...(phone && { phone }),
-        ...(aboutCompany && { aboutCompany }),
-      },
-    });
+      // Update Employer table
+      const updatedEmployer = await prisma.employer.update({
+        where: { userId: id },
+        data: {
+          ...(address && { address }),
+          ...(industryType && { industryType }),
+          ...(companySize && { companySize }),
+          ...(contactName && { contactName }),
+          ...(phone && { phone }),
+          ...(aboutCompany && { aboutCompany }),
+          ...(imageUrl && { imageUrl }),
+        },
+      });
 
-    res.status(200).json({
-      message: "Employer information updated successfully",
-      updatedUser,
-      updatedEmployer,
+      res.status(200).json({
+        message: "Employer information updated successfully",
+        updatedUser,
+        updatedEmployer,
+      });
     });
   } catch (error) {
     console.error("Error updating Employer information:", error);
@@ -186,6 +236,7 @@ const getCompanyDetails = async (req, res) => {
             contactName: true,
             phone: true,
             aboutCompany: true,
+            imageUrl: true,
           },
         },
       },
@@ -218,6 +269,7 @@ const getCompanyDetails = async (req, res) => {
         contactName: firstEmployer.contactName || "N/A",
         phone: firstEmployer.phone || "N/A",
         aboutCompany: firstEmployer.aboutCompany || "N/A",
+        imageUrl: firstEmployer.imageUrl || "N/A",
       },
     };
 
@@ -303,7 +355,7 @@ const postJob = async (req, res) => {
     // Destructure job details from request body
     const {
       title,
-      category,
+      categoryId,
       description,
       applicationDeadline,
       requirement,
@@ -317,7 +369,7 @@ const postJob = async (req, res) => {
     const job = await prisma.job.create({
       data: {
         title,
-        category,
+        categoryId,
         description,
         employerId, // Use the correct employer ID
         applicationDeadline,
@@ -382,11 +434,18 @@ const getJobsByEmployer = async (req, res) => {
     if (!employer) {
       return res.status(403).json({ message: "Unauthorized access" });
     }
+    console.log("Employer found:", employer); // Log employer details
 
     // Fetch jobs posted by the employer along with the count of applicants for each job
     const jobs = await prisma.job.findMany({
       where: { employerId: employer.id },
       include: {
+        category: {
+          // ✅ was jobCategory before, fixed now
+          select: {
+            name: true,
+          },
+        },
         // Count the number of applications (i.e., the number of applicants for each job)
         application: {
           select: {
@@ -395,6 +454,7 @@ const getJobsByEmployer = async (req, res) => {
         },
       },
     });
+    console.log("Jobs fetched:", jobs); // Log fetched jobs
 
     // Add the application count for each job
     const jobsWithApplicantCount = jobs.map((job) => ({
@@ -493,6 +553,61 @@ const editJobById = async (req, res) => {
   }
 };
 
+const deleteJobById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const employer = await prisma.employer.findUnique({
+      where: { userId: req.userId },
+    });
+
+    if (!employer) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    const job = await prisma.job.findUnique({
+      where: { id },
+    });
+
+    if (!job || job.employerId !== employer.id) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to delete this job" });
+    }
+
+    await prisma.job.delete({
+      where: { id },
+    });
+
+    res.status(200).json({ message: "Job deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+const getPricingPackage = async (req, res) => {
+  try {
+    // Verify token and get the userId from the token
+    const userId = req.userId; // Extract userId from the token payload
+
+    // If you want to use employer information, you can do this:
+    const employer = await prisma.employer.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!employer) {
+      return res.status(404).json({ error: "Employer not found" });
+    }
+
+    // If you want to associate packages with employer, here is the fetched packages
+    const packages = await prisma.pricingPackage.findMany();
+
+    res.status(200).json({ packages, employerId: employer.id });
+  } catch (error) {
+    console.error("Error fetching pricing packages:", error);
+    res.status(500).json({ error: "Failed to fetch pricing packages" });
+  }
+};
+
 export {
   getEmployerProfile,
   createEmployerProfile,
@@ -503,4 +618,6 @@ export {
   editJobById,
   getJobById,
   getJobsByEmployer,
+  getPricingPackage,
+  deleteJobById,
 };

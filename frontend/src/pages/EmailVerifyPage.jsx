@@ -3,7 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 
 export default function EmailVerifyPage() {
-  const { token } = useParams(); // Capture token from the URL
+  const { token, userType } = useParams(); // Capture token from the URL
   const [verificationStatus, setVerificationStatus] = useState(null); // For status messages
   const navigate = useNavigate(); // Use useNavigate instead of useHistory
 
@@ -13,15 +13,19 @@ export default function EmailVerifyPage() {
       try {
         // Send GET request to the backend with the token
         const response = await axios.put(
-          `http://localhost:3000/api/users/verify-email/${token}`
+          `http://localhost:3000/api/users/verify-email/${userType}/${token}`
         );
         console.log("Token being sent:", token);
         if (response.status === 200) {
           // Success message
-          setVerificationStatus("Your email has been verified successfully!");
+          setVerificationStatus(`${userType} email verified successfully!`);
+          let loginPath = "/login";
+          if (userType === "JOBSEEKER") loginPath = "/jobseeker/login";
+          else if (userType === "EMPLOYER") loginPath = "/employer/login";
+
           setTimeout(() => {
-            navigate("/jobseeker/login"); // Redirect to login page after successful verification
-          }, 3000); // Delay before redirecting
+            navigate(loginPath);
+          }, 3000);
         }
       } catch (error) {
         // Handle errors
@@ -33,7 +37,7 @@ export default function EmailVerifyPage() {
 
     // Call the verification function
     verifyEmail();
-  }, [token, navigate]); // Runs whenever the token or navigate changes
+  }, [token, userType, navigate]); // Runs whenever the token or navigate changes
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">

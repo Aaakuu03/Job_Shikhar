@@ -37,7 +37,7 @@ export default function NavbarJob() {
           imageUrl: data.imageUrl || "",
         });
       } catch (error) {
-        toast.error("Failed to fetch profile data.");
+        setError.error("Failed to fetch profile data.");
       } finally {
         setLoading(false);
       }

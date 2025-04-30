@@ -185,7 +185,7 @@ export default function UpdateWorkExperience() {
             type="submit"
             className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl"
           >
-            Add
+            Update
           </button>
 
           <NavLink to="/jobseeker/workexperience/info">

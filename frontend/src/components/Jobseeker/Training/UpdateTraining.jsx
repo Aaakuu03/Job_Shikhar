@@ -131,10 +131,10 @@ export default function UpdateTraining() {
             required
           />
         </div>
-        <div className="mt-8 flex items-center justify-center gap-4">
+        <div className="mt-8 flex items-center justify-center gap-4 ">
           <button
             type="submit"
-            className="mt-8 px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white mx-auto block rounded-lg shadow-2xl"
+            className="px-6 py-2 w-100 bg-[#333] hover:bg-[#444] text-sm text-white rounded-lg shadow-2xl"
           >
             Update
           </button>
